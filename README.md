@@ -1,2 +1,6 @@
-# python_openssl_playground
-pyOpenSSL playground
+# Python OpenSSL code playground
+This repo uses `pyOpenSSL`.
+
+https://github.com/pyca
+
+https://github.com/pyca/pyopenssl
