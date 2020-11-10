@@ -25,10 +25,10 @@ class CertificateChecker:
         try:
             store_ctx = X509StoreContext(self.trusted_certs, self.untrusted_cert)
             store_ctx.verify_certificate()
-        except:
-            return False
-        finally:
             return True
+        except OpenSSL.crypto.X509StoreContextError as e:
+            print('[!]Certificate:\t{0}\t\tcode:{1}\t\t{2}'.format(e.certificate.get_subject().CN, e.args[0][0], e.args[0][2]))
+            return False
 
     @staticmethod
     def openssl_version():
@@ -55,4 +55,4 @@ class TestCertificateChecker(unittest.TestCase):
 if __name__ == '__main__':
     print(CertificateChecker.openssl_version())
     tests = TestCertificateChecker()
-    unittest.main(tests.test_bad_leaf_cert())   # unittest.main()
+    unittest.main()     # unittest.main(tests.test_bad_leaf_cert())
