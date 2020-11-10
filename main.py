@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+
 import OpenSSL.SSL
 import cryptography
 from OpenSSL.crypto import load_certificate
@@ -13,12 +14,12 @@ from test_certs import root_ca_cert_pem
 
 class CertificateChecker:
     def __init__(self, untrusted_cert_pem):
-        root_cert = load_certificate(FILETYPE_PEM, root_ca_cert_pem)
-        int_cert = load_certificate(FILETYPE_PEM, int_ca_cert_pem)
-        untrusted_cert = load_certificate(FILETYPE_PEM, untrusted_cert_pem)
-        trusted_certs = X509Store()
-        trusted_certs.add_cert(root_cert)
-        trusted_certs.add_cert(int_cert)
+        self.root_cert = load_certificate(FILETYPE_PEM, root_ca_cert_pem)
+        self.int_cert = load_certificate(FILETYPE_PEM, int_ca_cert_pem)
+        self.untrusted_cert = load_certificate(FILETYPE_PEM, untrusted_cert_pem)
+        self.trusted_certs = X509Store()
+        self.trusted_certs.add_cert(self.root_cert)
+        self.trusted_certs.add_cert(self.int_cert)
 
     def verify_cert(self):
         try:
@@ -39,16 +40,19 @@ class CertificateChecker:
 class TestCertificateChecker(unittest.TestCase):
     def test_good_leaf_cert(self):
         c = CertificateChecker(good_leaf_cert_pem)
-        self.assertTrue(c.verify_cert(), "Expected apple to be cut")
+        self.assertTrue(c.verify_cert(), "Expected good leaf to Verify")
 
     def test_bad_leaf_cert(self):
         c = CertificateChecker(bad_leaf_cert_pem)
-        self.assertFalse(c.verify_cert(), "Expected apple to be cut")
+        self.assertFalse(c.verify_cert(), "Expected bad leaf to fail Verify")
 
     def test_openssl_types(self):
         c = CertificateChecker(bad_leaf_cert_pem)
-        self.assertTrue(isinstance(bad_leaf_cert, OpenSSL.crypto.X509))
+        self.assertTrue(isinstance(c.trusted_certs, OpenSSL.crypto.X509Store))
+        self.assertTrue(isinstance(c.untrusted_cert, OpenSSL.crypto.X509))
+
 
 if __name__ == '__main__':
     print(CertificateChecker.openssl_version())
-    unittest.main()
+    tests = TestCertificateChecker()
+    unittest.main(tests.test_bad_leaf_cert())   # unittest.main()
