@@ -46,6 +46,12 @@ class TestCertificateChecker(unittest.TestCase):
         c = CertificateChecker(bad_leaf_cert_pem)
         self.assertFalse(c.verify_cert(), "Expected bad leaf to fail Verify")
 
+    def test_no_int_ca_in_trust_store(self):
+        c = CertificateChecker(good_leaf_cert_pem)
+        c.trusted_certs = X509Store()
+        c.trusted_certs.add_cert(c.root_cert)
+        self.assertFalse(c.verify_cert(), "Expected to fail verify, as Int CA was removed")
+
     def test_openssl_types(self):
         c = CertificateChecker(bad_leaf_cert_pem)
         self.assertTrue(isinstance(c.trusted_certs, OpenSSL.crypto.X509Store))
@@ -55,4 +61,5 @@ class TestCertificateChecker(unittest.TestCase):
 if __name__ == '__main__':
     print(CertificateChecker.openssl_version())
     tests = TestCertificateChecker()
-    unittest.main()     # unittest.main(tests.test_bad_leaf_cert())
+    # unittest.main()
+    unittest.main(tests.test_no_int_ca_in_trust_store())
