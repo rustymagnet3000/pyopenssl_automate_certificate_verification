@@ -1,10 +1,10 @@
 #!/usr/bin/python3
-
+import datetime
 import OpenSSL.SSL
+from OpenSSL.crypto import X509Store, X509StoreContext, load_certificate, FILETYPE_PEM
+import socket
+import ssl
 import cryptography
-from OpenSSL.crypto import load_certificate
-from OpenSSL.crypto import X509Store, X509StoreContext
-from OpenSSL.crypto import FILETYPE_PEM
 import unittest
 from test_certs import good_leaf_cert_pem
 from test_certs import bad_leaf_cert_pem
@@ -38,12 +38,14 @@ class CertificateChecker:
         notBefore: {notbefore}
         notAfter:  {notafter}
         serial num: {serial_number}
+        Expired: {expired}
         '''.format(
-            commonname=cert.get_subject(),
-            issuer=cert.get_issuer(),
-            notbefore=cert.gmtime_adj_notBefore(0),
-            notafter=cert.gmtime_adj_notAfter(0),
-            serial_number=cert.get_serial_number()
+            commonname=cert.get_subject().CN,
+            issuer=cert.get_issuer().CN,
+            notbefore=CertificateChecker.pretty_date(cert.get_notBefore()),
+            notafter=CertificateChecker.pretty_date(cert.get_notAfter()),
+            serial_number=cert.get_serial_number(),
+            expired=cert.has_expired()
         )
         print(s)
 
@@ -52,6 +54,11 @@ class CertificateChecker:
         return "OpenSSL: {openssl}\ncryptography: {cryptography}".format(
             openssl=OpenSSL.SSL.SSLeay_version(OpenSSL.SSL.SSLEAY_VERSION),
             cryptography=cryptography.__version__)
+
+    @staticmethod
+    def pretty_date(date_from_cert):
+        date = (datetime.datetime.strptime(date_from_cert.decode('ascii'), '%Y%m%d%H%M%SZ'))
+        return(f"{date:%d-%b-%Y}")
 
 
 class TestCertificateChecker(unittest.TestCase):
@@ -77,8 +84,24 @@ class TestCertificateChecker(unittest.TestCase):
 
 if __name__ == '__main__':
     print(CertificateChecker.openssl_version())
-    tests = TestCertificateChecker()
+    # tests = TestCertificateChecker()
     # unittest.main()
     # unittest.main(tests.test_no_int_ca_in_trust_store())
-    c = CertificateChecker(good_leaf_cert_pem)
-    CertificateChecker.print_basic_info(c.root_cert)
+    check = CertificateChecker(good_leaf_cert_pem)
+    CertificateChecker.print_basic_info(check.root_cert)
+
+
+    # Create Stream socket and connect ( blocking )
+    # dest = ('httpbin.org', 443)
+    # s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    # s.connect(dest)
+    # # upgrade the socket to TLS without any certificate verification, just to obtain the certificate
+    # ctx = ssl.create_default_context()
+    # ctx.check_hostname = True
+    # ctx.verify_mode = ssl.CERT_REQUIRED
+    # s = ctx.wrap_socket(s, server_hostname=dest[0])
+    # cert_bin = s.getpeercert(True)
+    # # Get data out of cert
+    # x509 = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_ASN1, cert_bin)
+    # print(type(x509))
+    # print("Common Name= {}".format(x509.get_subject().CN))
