@@ -31,6 +31,23 @@ class CertificateChecker:
             return False
 
     @staticmethod
+    def print_basic_info(cert: OpenSSL.crypto.X509):
+        s = '''
+        commonName: {commonname}
+        issuer: {issuer}
+        notBefore: {notbefore}
+        notAfter:  {notafter}
+        serial num: {serial_number}
+        '''.format(
+            commonname=cert.get_subject(),
+            issuer=cert.get_issuer(),
+            notbefore=cert.gmtime_adj_notBefore(0),
+            notafter=cert.gmtime_adj_notAfter(0),
+            serial_number=cert.get_serial_number()
+        )
+        print(s)
+
+    @staticmethod
     def openssl_version():
         return "OpenSSL: {openssl}\ncryptography: {cryptography}".format(
             openssl=OpenSSL.SSL.SSLeay_version(OpenSSL.SSL.SSLEAY_VERSION),
@@ -39,27 +56,29 @@ class CertificateChecker:
 
 class TestCertificateChecker(unittest.TestCase):
     def test_good_leaf_cert(self):
-        c = CertificateChecker(good_leaf_cert_pem)
-        self.assertTrue(c.verify_cert(), "Expected good leaf to Verify")
+        check = CertificateChecker(good_leaf_cert_pem)
+        self.assertTrue(check.verify_cert(), "Expected good leaf to Verify")
 
     def test_bad_leaf_cert(self):
-        c = CertificateChecker(bad_leaf_cert_pem)
-        self.assertFalse(c.verify_cert(), "Expected bad leaf to fail Verify")
+        check = CertificateChecker(bad_leaf_cert_pem)
+        self.assertFalse(check.verify_cert(), "Expected bad leaf to fail Verify")
 
     def test_no_int_ca_in_trust_store(self):
-        c = CertificateChecker(good_leaf_cert_pem)
-        c.trusted_certs = X509Store()
-        c.trusted_certs.add_cert(c.root_cert)
-        self.assertFalse(c.verify_cert(), "Expected to fail verify, as Int CA was removed")
+        check = CertificateChecker(good_leaf_cert_pem)
+        check.trusted_certs = X509Store()
+        check.trusted_certs.add_cert(check.root_cert)
+        self.assertFalse(check.verify_cert(), "Expected to fail verify, as Int CA was removed")
 
     def test_openssl_types(self):
-        c = CertificateChecker(bad_leaf_cert_pem)
-        self.assertTrue(isinstance(c.trusted_certs, OpenSSL.crypto.X509Store))
-        self.assertTrue(isinstance(c.untrusted_cert, OpenSSL.crypto.X509))
+        check = CertificateChecker(bad_leaf_cert_pem)
+        self.assertTrue(isinstance(check.trusted_certs, OpenSSL.crypto.X509Store))
+        self.assertTrue(isinstance(check.untrusted_cert, OpenSSL.crypto.X509))
 
 
 if __name__ == '__main__':
     print(CertificateChecker.openssl_version())
     tests = TestCertificateChecker()
     # unittest.main()
-    unittest.main(tests.test_no_int_ca_in_trust_store())
+    # unittest.main(tests.test_no_int_ca_in_trust_store())
+    c = CertificateChecker(good_leaf_cert_pem)
+    CertificateChecker.print_basic_info(c.root_cert)
