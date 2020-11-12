@@ -31,7 +31,7 @@ class CertificateChecker:
             return False
 
     @staticmethod
-    def print_basic_info(cert: OpenSSL.crypto.X509):
+    def print_cert_info(cert: OpenSSL.crypto.X509):
         s = '''
         commonName: {commonname}
         issuer: {issuer}
@@ -56,7 +56,7 @@ class CertificateChecker:
             cryptography=cryptography.__version__)
 
     @staticmethod
-    def pretty_date(date_from_cert):
+    def pretty_date(date_from_cert: bytes):
         date = (datetime.datetime.strptime(date_from_cert.decode('ascii'), '%Y%m%d%H%M%SZ'))
         return(f"{date:%d-%b-%Y}")
 
@@ -87,21 +87,36 @@ if __name__ == '__main__':
     # tests = TestCertificateChecker()
     # unittest.main()
     # unittest.main(tests.test_no_int_ca_in_trust_store())
-    check = CertificateChecker(good_leaf_cert_pem)
-    CertificateChecker.print_basic_info(check.root_cert)
+    # check = CertificateChecker(good_leaf_cert_pem)
+    # CertificateChecker.print_cert_info(check.root_cert)
 
 
     # Create Stream socket and connect ( blocking )
-    # dest = ('httpbin.org', 443)
-    # s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    # s.connect(dest)
-    # # upgrade the socket to TLS without any certificate verification, just to obtain the certificate
-    # ctx = ssl.create_default_context()
-    # ctx.check_hostname = True
-    # ctx.verify_mode = ssl.CERT_REQUIRED
-    # s = ctx.wrap_socket(s, server_hostname=dest[0])
-    # cert_bin = s.getpeercert(True)
-    # # Get data out of cert
-    # x509 = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_ASN1, cert_bin)
-    # print(type(x509))
-    # print("Common Name= {}".format(x509.get_subject().CN))
+    dest = ('httpbin.org', 443)
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.settimeout(2)
+    sock.connect(dest)
+
+    # Given a connection oriented socket, the SSLContext.wrap_socket()method returns an SSLSocket.
+    # upgrade the socket to TLS without any certificate verification, obtain the certificate in bytes
+    try:
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = True
+        ctx.verify_mode = ssl.CERT_REQUIRED
+        sock = ctx.wrap_socket(sock, server_hostname=dest[0])
+        cert_bin = sock.getpeercert(True)
+        der_cert_bytes = sock.getpeercert(True)
+        leaf_cert = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_ASN1, der_cert_bytes)
+        assert(isinstance(leaf_cert, OpenSSL.crypto.X509))
+        CertificateChecker.print_cert_info(leaf_cert)
+    except:
+        sock.close()
+    finally:
+        sock.close()
+
+
+
+
+
+
+
