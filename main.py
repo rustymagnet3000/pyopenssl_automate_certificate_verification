@@ -3,6 +3,7 @@ import datetime
 import OpenSSL.SSL
 from OpenSSL.crypto import X509Store, X509StoreContext, load_certificate, FILETYPE_PEM
 from pathlib import Path
+import os
 import socket
 import ssl
 import cryptography
@@ -14,16 +15,19 @@ from test_certs import root_ca_cert_pem
 
 
 class CertificateChecker:
-    def __init__(self, untrusted_leaf):
+    def __init__(self, leaf_to_verify):
         self.trusted_certs = X509Store()
+        self.context = OpenSSL.SSL.Context(OpenSSL.SSL.TLSv1_2_METHOD)
         self.load_trust_store()
         if isinstance(untrusted_leaf, OpenSSL.crypto.X509):
-            self.untrusted_leaf = untrusted_leaf
+            self.untrusted_leaf = leaf_to_verify
         elif isinstance(untrusted_leaf, bytes):
-            self.untrusted_leaf = load_certificate(FILETYPE_PEM, untrusted_leaf)
+            self.untrusted_leaf = load_certificate(FILETYPE_PEM, leaf_to_verify)
 
     def load_trust_store(self):
         print("[*]Constructing Trust Store")
+        ca_dir = Path(os.getcwd() + '/ca_files')
+        self.context.load_verify_locations(cafile=None, capath=ca_dir.__bytes__())
         root_cert = load_certificate(FILETYPE_PEM, root_ca_cert_pem)
         int_cert = load_certificate(FILETYPE_PEM, int_ca_cert_pem)
         self.trusted_certs.add_cert(root_cert)
@@ -32,6 +36,7 @@ class CertificateChecker:
     def verify_cert(self):
         try:
             store_ctx = X509StoreContext(self.trusted_certs, self.untrusted_leaf)
+            store_ctx
             store_ctx.verify_certificate()
             return True
         except OpenSSL.crypto.X509StoreContextError as e:
@@ -116,7 +121,7 @@ class TestCertificateChecker(unittest.TestCase):
     def test_partial_chain_allowed(self):
         check = CertificateChecker(good_leaf_cert_pem)
         check.trusted_certs = X509Store()       # re-init Trust Store
-        check.trusted_certs.set_flags(0x80000)
+        check.trusted_certs.set_flags(0x80000)  # X509_V_FLAG_PARTIAL_CHAIN
         int_cert = load_certificate(FILETYPE_PEM, int_ca_cert_pem)
         check.trusted_certs.add_cert(int_cert)
         self.assertTrue(check.verify_cert(), "Expected OK. No Root CA. Int CA {0} . + flag for Partial Chain flag".format(int_cert))
@@ -128,6 +133,9 @@ class TestCertificateChecker(unittest.TestCase):
 
 
 if __name__ == '__main__':
-
-    tests = TestCertificateChecker()
-    unittest.main(tests.test_partial_chain_allowed())
+    print(CertificateChecker.openssl_version())
+    hostname = 'httpbin.org'
+    untrusted_leaf = CertificateChecker.get_leaf_cert_from_host(hostname)
+    if untrusted_leaf is not None:
+        checker = CertificateChecker(untrusted_leaf)
+        checker.verify_cert()
