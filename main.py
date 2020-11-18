@@ -2,6 +2,7 @@
 import datetime
 import OpenSSL.SSL
 from OpenSSL.crypto import X509Store, X509StoreContext, load_certificate, FILETYPE_PEM
+from pathlib import Path
 import socket
 import ssl
 import cryptography
@@ -17,6 +18,9 @@ class CertificateChecker:
         self.root_cert = load_certificate(FILETYPE_PEM, root_ca_cert_pem)
         self.int_cert = load_certificate(FILETYPE_PEM, int_ca_cert_pem)
         self.untrusted_cert = load_certificate(FILETYPE_PEM, untrusted_cert_pem)
+        self.load_trust_store()
+
+    def load_trust_store(self):
         self.trusted_certs = X509Store()
         self.trusted_certs.add_cert(self.root_cert)
         self.trusted_certs.add_cert(self.int_cert)
@@ -92,7 +96,8 @@ if __name__ == '__main__':
 
 
     # Create Stream socket and connect ( blocking )
-    dest = ('httpbin.org', 443)
+    hostname = 'httpbin.org'
+    dest = (hostname, 443)
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.settimeout(2)
     sock.connect(dest)
@@ -108,15 +113,10 @@ if __name__ == '__main__':
         der_cert_bytes = sock.getpeercert(True)
         leaf_cert = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_ASN1, der_cert_bytes)
         assert(isinstance(leaf_cert, OpenSSL.crypto.X509))
-        CertificateChecker.print_cert_info(leaf_cert)
+        checker = CertificateChecker(leaf_cert)
+
     except:
-        sock.close()
+        print("exception throw")
     finally:
         sock.close()
-
-
-
-
-
-
 
