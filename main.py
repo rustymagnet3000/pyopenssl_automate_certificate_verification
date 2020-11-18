@@ -23,6 +23,7 @@ class CertificateChecker:
             self.untrusted_leaf = load_certificate(FILETYPE_PEM, untrusted_leaf)
 
     def load_trust_store(self):
+        print("[*]Constructing Trust Store")
         root_cert = load_certificate(FILETYPE_PEM, root_ca_cert_pem)
         int_cert = load_certificate(FILETYPE_PEM, int_ca_cert_pem)
         self.trusted_certs.add_cert(root_cert)
@@ -35,6 +36,8 @@ class CertificateChecker:
             return True
         except OpenSSL.crypto.X509StoreContextError as e:
             print('[!]Certificate:\t{0}\t\tcode:{1}\t\t{2}'.format(e.certificate.get_subject().CN, e.args[0][0], e.args[0][2]))
+            return False
+        except:
             return False
 
     @staticmethod
@@ -78,7 +81,6 @@ class CertificateChecker:
             leaf_cert = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_ASN1, der_cert_bytes)
             return leaf_cert
         except:
-            print("exception throw")
             return None
         finally:
             sock.close()
@@ -106,10 +108,18 @@ class TestCertificateChecker(unittest.TestCase):
 
     def test_no_int_ca_in_trust_store(self):
         check = CertificateChecker(good_leaf_cert_pem)
-        check.trusted_certs = X509Store()       # None out the Trust Store
+        check.trusted_certs = X509Store()       # re-init Trust Store
         root_cert = load_certificate(FILETYPE_PEM, root_ca_cert_pem)
         check.trusted_certs.add_cert(root_cert)
         self.assertFalse(check.verify_cert(), "Expected to fail verify, as Int CA was removed")
+
+    def test_partial_chain_allowed(self):
+        check = CertificateChecker(good_leaf_cert_pem)
+        check.trusted_certs = X509Store()       # re-init Trust Store
+        check.trusted_certs.set_flags(0x80000)
+        int_cert = load_certificate(FILETYPE_PEM, int_ca_cert_pem)
+        check.trusted_certs.add_cert(int_cert)
+        self.assertTrue(check.verify_cert(), "Expected OK. No Root CA. Int CA {0} . + flag for Partial Chain flag".format(int_cert))
 
     def test_openssl_types(self):
         check = CertificateChecker(bad_leaf_cert_pem)
@@ -118,11 +128,6 @@ class TestCertificateChecker(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    # print(CertificateChecker.openssl_version())
-    # hostname = 'httpbin.org'
-    # untrusted_leaf = CertificateChecker.get_leaf_cert_from_host(hostname)
-    # checker = CertificateChecker(untrusted_leaf)
-    # checker.verify_cert()
 
     tests = TestCertificateChecker()
-    unittest.main(tests.test_openssl_types())
+    unittest.main(tests.test_partial_chain_allowed())
