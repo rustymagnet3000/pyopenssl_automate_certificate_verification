@@ -1,23 +1,34 @@
 #!/usr/bin/python3
 import datetime
-import OpenSSL.SSL
-from OpenSSL.crypto import X509Store, X509StoreContext, load_certificate, FILETYPE_PEM
+
+
+from OpenSSL.crypto import (
+    X509,
+    X509Store,
+    X509StoreContext,
+    load_certificate,
+    FILETYPE_PEM
+)
+from OpenSSL.SSL import (
+    Connection,
+    TLSv1_2_METHOD
+)
 from pathlib import Path
 import os
 import socket
-import ssl
 import cryptography
 import unittest
-from test_certs import good_leaf_cert_pem
-from test_certs import bad_leaf_cert_pem
-from test_certs import int_ca_cert_pem
-from test_certs import root_ca_cert_pem
+from test_certs import (
+    good_leaf_cert_pem,
+    bad_leaf_cert_pem,
+    int_ca_cert_pem,
+    root_ca_cert_pem
+)
 
 
 class CertificateChecker:
     def __init__(self, leaf_to_verify):
         self.trusted_certs = X509Store()
-        self.context = OpenSSL.SSL.Context(OpenSSL.SSL.TLSv1_2_METHOD)
         self.load_trust_store()
         if isinstance(untrusted_leaf, OpenSSL.crypto.X509):
             self.untrusted_leaf = leaf_to_verify
@@ -26,8 +37,6 @@ class CertificateChecker:
 
     def load_trust_store(self):
         print("[*]Constructing Trust Store")
-        ca_dir = Path(os.getcwd() + '/ca_files')
-        self.context.load_verify_locations(cafile=None, capath=ca_dir.__bytes__())
         root_cert = load_certificate(FILETYPE_PEM, root_ca_cert_pem)
         int_cert = load_certificate(FILETYPE_PEM, int_ca_cert_pem)
         self.trusted_certs.add_cert(root_cert)
@@ -36,7 +45,6 @@ class CertificateChecker:
     def verify_cert(self):
         try:
             store_ctx = X509StoreContext(self.trusted_certs, self.untrusted_leaf)
-            store_ctx
             store_ctx.verify_certificate()
             return True
         except OpenSSL.crypto.X509StoreContextError as e:
@@ -65,27 +73,45 @@ class CertificateChecker:
         print(s)
 
     @staticmethod
-    def get_leaf_cert_from_host(hostname: str):
-        '''
+    def verify_cb(conn, cert, errnum, depth, ok):
+        if not ok:
+            print('certificate', cert.get_subject().CN, 'chain depth', depth, 'verification failed:', errnum)
+        return ok
+
+    @staticmethod
+    def get_leaf_cert_from_host(host: str):
+        """
             Create Stream socket and connects.  Blocking.  This is a connection oriented socket
             The SSLContext.wrap_socket()method returns an SSLSocket.
             upgrade the socket to TLS without any certificate verification, to obtain the certificate in bytes
-        '''
-        #
-        dest = (hostname, 443)
+        """
+        ca_dir = Path(os.getcwd() + '/ca_files')
+        context = OpenSSL.SSL.Context(OpenSSL.SSL.TLSv1_2_METHOD)
+        context.load_verify_locations(cafile=None, capath=ca_dir.__bytes__())
+        context.set_verify(OpenSSL.SSL.VERIFY_PEER, CertificateChecker.verify_cb)
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(2)
-        sock.connect(dest)
-
+        des = (host, 443)
+        print('Connect issued...')
+        sock.connect(des)
+        print('connected: {0}\t{1}'.format(host, sock.getpeername()))
+        client_ssl = Connection(context, sock)
+        client_ssl.set_connect_state()
         try:
-            ctx = ssl.create_default_context()
-            ctx.check_hostname = True
-            ctx.verify_mode = ssl.CERT_REQUIRED
-            sock = ctx.wrap_socket(sock, server_hostname=dest[0])
+            client_ssl.do_handshake()
+            print('Connect succeeded...')
+            # ctx = ssl.create_default_context()
+            # ctx.check_hostname = True
+            # ctx.verify_mode = ssl.CERT_REQUIRED
+            #            self.context.set_verify(OpenSSL.SSL.VERIFY_PEER, self.verify_callback())
             der_cert_bytes = sock.getpeercert(True)
             leaf_cert = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_ASN1, der_cert_bytes)
             return leaf_cert
+        except OpenSSL.crypto.X509StoreContextError as e:
+            print('[!]Certificate:\t{0}\t\tcode:{1}\t\t{2}'.format(e.certificate.get_subject().CN, e.args[0][0], e.args[0][2]))
+            return None
         except:
+            print("[!]general exception")
             return None
         finally:
             sock.close()
@@ -133,9 +159,8 @@ class TestCertificateChecker(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    print(CertificateChecker.openssl_version())
-    hostname = 'httpbin.org'
-    untrusted_leaf = CertificateChecker.get_leaf_cert_from_host(hostname)
-    if untrusted_leaf is not None:
-        checker = CertificateChecker(untrusted_leaf)
-        checker.verify_cert()
+   # print(CertificateChecker.openssl_version())
+    CertificateChecker.get_leaf_cert_from_host('httpbin.org')
+    # if untrusted_leaf is not None:
+    #     checker = CertificateChecker(untrusted_leaf)
+    #     print("[*]Verify {0} leaf.  Result:{1}".format(hostname, checker.verify_cert()))
