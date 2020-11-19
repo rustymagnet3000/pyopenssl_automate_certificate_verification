@@ -1,24 +1,31 @@
 #!/usr/bin/python3
 import datetime
-
 import OpenSSL
 
 from OpenSSL.crypto import (
     X509Store,
     X509StoreContext,
     load_certificate,
-    FILETYPE_PEM
+    FILETYPE_PEM,
+    FILETYPE_ASN1,
+    X509StoreContextError
 )
 from OpenSSL.SSL import (
     Connection,
     TLSv1_2_METHOD,
     OP_NO_SSLv2,
     OP_NO_SSLv3,
-    OP_NO_TLSv1
+    OP_NO_TLSv1,
+    Context,
+    VERIFY_PEER,
+    WantReadError,
+    SSLEAY_VERSION,
+    SSLeay_version
 )
+
 from pathlib import Path
-import os
-import socket
+from os import getcwd
+from socket import socket
 import cryptography
 import unittest
 from test_certs import (
@@ -88,46 +95,37 @@ class CertificateChecker:
             The SSLContext.wrap_socket()method returns an SSLSocket.
             upgrade the socket to TLS without any certificate verification, to obtain the certificate in bytes
         """
-        ca_dir = Path(os.getcwd() + '/ca_files')
-        context = OpenSSL.SSL.Context(TLSv1_2_METHOD)
-        context.set_options(OP_NO_SSLv2)
-        context.set_options(OP_NO_SSLv3)
-        context.set_options(OP_NO_TLSv1)
-        context.load_verify_locations(cafile=None, capath=ca_dir.__bytes__())
-        context.set_verify(OpenSSL.SSL.VERIFY_PEER, CertificateChecker.verify_cb)
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.setblocking(False)
-        sock.settimeout(5)
+        # # # # # # # # # # # Socket # # # # # # # # # # #
+        sock = socket()
+        sock.setblocking(True)
+        sock.connect_ex(sock.getsockname())                     # https://docs.python.org/2/library/socket.html
         des = (host, 443)
         print('[*]Connect issued...')
         sock.connect(des)
         print('[*]connected: {0}\t{1}'.format(host, sock.getpeername()))
+        # # # # # # # # # # # Context # # # # # # # # # # #
+        context = Context(TLSv1_2_METHOD)
+        context.set_options(OP_NO_SSLv2)
+        context.set_options(OP_NO_SSLv3)
+        context.set_options(OP_NO_TLSv1)
+        ca_dir = Path(getcwd() + '/ca_files')
+        context.load_verify_locations(cafile=None, capath=ca_dir.__bytes__())
+        context.set_verify(VERIFY_PEER, CertificateChecker.verify_cb)
+        # # # # # # # # # # # Upgrade to TLS # # # # # # # # # # #
         tls_client = Connection(context, sock)                  # Connection object, using the given OpenSSL.SSL.Context
         tls_client.set_connect_state()                          # set to work in client mode
-        tls_client.set_tlsext_host_name(host.encode('utf8'))    # Set value of servername extension for  client hello.
+
         try:
-
             tls_client.do_handshake()
-
-            # usually called after: meth:`renegotiate` or one of: meth:`set_accept_state` or: meth:`set_connect_state`).
-
             print('[*]Connect succeeded...')
             CertificateChecker.print_cert_info(tls_client.get_peer_certificate())
-            # ctx = ssl.create_default_context()
-            # ctx.check_hostname = True
-            # ctx.verify_mode = ssl.CERT_REQUIRED
-            # self.context.set_verify(OpenSSL.SSL.VERIFY_PEER, self.verify_callback())
-            OP_NO_SSLv2,
-            OP_NO_SSLv3,
-            OP_NO_TLSv1
             der_cert_bytes = sock.getpeercert(True)
-            leaf_cert = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_ASN1, der_cert_bytes)
+            leaf_cert = OpenSSL.crypto.load_certificate(FILETYPE_ASN1, der_cert_bytes)
             return leaf_cert
-        except OpenSSL.SSL.WantX509LookupError as e:
-            print('[!]WantX509LookupError {0}'.format(e))
-        except OpenSSL.SSL.WantReadError as e:
-            print('[!]OpenSSL WantReadError {0}'.format(e))
-        except OpenSSL.crypto.X509StoreContextError as e:
+        except WantReadError as e:
+            print("[-]WantReadError passed")
+            pass
+        except X509StoreContextError as e:
             print('[!]Certificate:\t{0}\t\tcode:{1}\t\t{2}'.format(e.certificate.get_subject().CN, e.args[0][0], e.args[0][2]))
             return None
         except:
@@ -139,7 +137,7 @@ class CertificateChecker:
     @staticmethod
     def openssl_version():
         return "OpenSSL: {openssl}\ncryptography: {cryptography}".format(
-            openssl=OpenSSL.SSL.SSLeay_version(OpenSSL.SSL.SSLEAY_VERSION),
+            openssl=SSLeay_version(SSLEAY_VERSION),
             cryptography=cryptography.__version__)
 
     @staticmethod
