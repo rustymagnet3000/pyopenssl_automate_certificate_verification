@@ -26,7 +26,6 @@ from OpenSSL.SSL import (
 from pathlib import Path
 from os import getcwd
 from socket import socket
-import cryptography
 import unittest
 from test_certs import (
     good_leaf_cert_pem,
@@ -103,6 +102,7 @@ class CertificateChecker:
         print('[*]Connect issued...')
         sock.connect(des)
         print('[*]connected: {0}\t{1}'.format(host, sock.getpeername()))
+
         # # # # # # # # # # # Context # # # # # # # # # # #
         context = Context(TLSv1_2_METHOD)
         context.set_options(OP_NO_SSLv2)
@@ -111,34 +111,29 @@ class CertificateChecker:
         ca_dir = Path(getcwd() + '/ca_files')
         context.load_verify_locations(cafile=None, capath=ca_dir.__bytes__())
         context.set_verify(VERIFY_PEER, CertificateChecker.verify_cb)
-        # # # # # # # # # # # Upgrade to TLS # # # # # # # # # # #
-        tls_client = Connection(context, sock)                  # Connection object, using the given OpenSSL.SSL.Context
+
+        # # # # # # # # # # # Create TLS client with OpenSSL.SSL.Context and socket # # # # # # # # # # #
+        tls_client = Connection(context, sock)
         tls_client.set_connect_state()                          # set to work in client mode
 
         try:
             tls_client.do_handshake()
-            print('[*]Connect succeeded...')
+            print('[*]Handshake succeeded...')
             CertificateChecker.print_cert_info(tls_client.get_peer_certificate())
-            der_cert_bytes = sock.getpeercert(True)
-            leaf_cert = OpenSSL.crypto.load_certificate(FILETYPE_ASN1, der_cert_bytes)
-            return leaf_cert
         except WantReadError as e:
-            print("[-]WantReadError passed")
+            print("[-]WantReadError")
             pass
         except X509StoreContextError as e:
             print('[!]Certificate:\t{0}\t\tcode:{1}\t\t{2}'.format(e.certificate.get_subject().CN, e.args[0][0], e.args[0][2]))
-            return None
         except:
             print("[!]general exception")
-            return None
         finally:
             sock.close()
+            return None
 
     @staticmethod
     def openssl_version():
-        return "OpenSSL: {openssl}\ncryptography: {cryptography}".format(
-            openssl=SSLeay_version(SSLEAY_VERSION),
-            cryptography=cryptography.__version__)
+        return "OpenSSL: {openssl}\ncryptography: ".format(openssl=SSLeay_version(SSLEAY_VERSION))
 
     @staticmethod
     def pretty_date(date_from_cert: bytes):
@@ -177,8 +172,6 @@ class TestCertificateChecker(unittest.TestCase):
 
 
 if __name__ == '__main__':
-   # print(CertificateChecker.openssl_version())
+    print(CertificateChecker.openssl_version())
     CertificateChecker.get_leaf_cert_from_host('httpbin.org')
-    # if untrusted_leaf is not None:
-    #     checker = CertificateChecker(untrusted_leaf)
-    #     print("[*]Verify {0} leaf.  Result:{1}".format(hostname, checker.verify_cert()))
+
