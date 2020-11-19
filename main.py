@@ -1,9 +1,9 @@
 #!/usr/bin/python3
 import datetime
 
+import OpenSSL
 
 from OpenSSL.crypto import (
-    X509,
     X509Store,
     X509StoreContext,
     load_certificate,
@@ -11,7 +11,10 @@ from OpenSSL.crypto import (
 )
 from OpenSSL.SSL import (
     Connection,
-    TLSv1_2_METHOD
+    TLSv1_2_METHOD,
+    OP_NO_SSLv2,
+    OP_NO_SSLv3,
+    OP_NO_TLSv1
 )
 from pathlib import Path
 import os
@@ -30,9 +33,9 @@ class CertificateChecker:
     def __init__(self, leaf_to_verify):
         self.trusted_certs = X509Store()
         self.load_trust_store()
-        if isinstance(untrusted_leaf, OpenSSL.crypto.X509):
+        if isinstance(leaf_to_verify, OpenSSL.crypto.X509):
             self.untrusted_leaf = leaf_to_verify
-        elif isinstance(untrusted_leaf, bytes):
+        elif isinstance(leaf_to_verify, bytes):
             self.untrusted_leaf = load_certificate(FILETYPE_PEM, leaf_to_verify)
 
     def load_trust_store(self):
@@ -86,27 +89,44 @@ class CertificateChecker:
             upgrade the socket to TLS without any certificate verification, to obtain the certificate in bytes
         """
         ca_dir = Path(os.getcwd() + '/ca_files')
-        context = OpenSSL.SSL.Context(OpenSSL.SSL.TLSv1_2_METHOD)
+        context = OpenSSL.SSL.Context(TLSv1_2_METHOD)
+        context.set_options(OP_NO_SSLv2)
+        context.set_options(OP_NO_SSLv3)
+        context.set_options(OP_NO_TLSv1)
         context.load_verify_locations(cafile=None, capath=ca_dir.__bytes__())
         context.set_verify(OpenSSL.SSL.VERIFY_PEER, CertificateChecker.verify_cb)
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(2)
+        sock.setblocking(False)
+        sock.settimeout(5)
         des = (host, 443)
-        print('Connect issued...')
+        print('[*]Connect issued...')
         sock.connect(des)
-        print('connected: {0}\t{1}'.format(host, sock.getpeername()))
-        client_ssl = Connection(context, sock)
-        client_ssl.set_connect_state()
+        print('[*]connected: {0}\t{1}'.format(host, sock.getpeername()))
+        tls_client = Connection(context, sock)                  # Connection object, using the given OpenSSL.SSL.Context
+        tls_client.set_connect_state()                          # set to work in client mode
+        tls_client.set_tlsext_host_name(host.encode('utf8'))    # Set value of servername extension for  client hello.
         try:
-            client_ssl.do_handshake()
-            print('Connect succeeded...')
+
+            tls_client.do_handshake()
+
+            # usually called after: meth:`renegotiate` or one of: meth:`set_accept_state` or: meth:`set_connect_state`).
+
+            print('[*]Connect succeeded...')
+            CertificateChecker.print_cert_info(tls_client.get_peer_certificate())
             # ctx = ssl.create_default_context()
             # ctx.check_hostname = True
             # ctx.verify_mode = ssl.CERT_REQUIRED
-            #            self.context.set_verify(OpenSSL.SSL.VERIFY_PEER, self.verify_callback())
+            # self.context.set_verify(OpenSSL.SSL.VERIFY_PEER, self.verify_callback())
+            OP_NO_SSLv2,
+            OP_NO_SSLv3,
+            OP_NO_TLSv1
             der_cert_bytes = sock.getpeercert(True)
             leaf_cert = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_ASN1, der_cert_bytes)
             return leaf_cert
+        except OpenSSL.SSL.WantX509LookupError as e:
+            print('[!]WantX509LookupError {0}'.format(e))
+        except OpenSSL.SSL.WantReadError as e:
+            print('[!]OpenSSL WantReadError {0}'.format(e))
         except OpenSSL.crypto.X509StoreContextError as e:
             print('[!]Certificate:\t{0}\t\tcode:{1}\t\t{2}'.format(e.certificate.get_subject().CN, e.args[0][0], e.args[0][2]))
             return None
