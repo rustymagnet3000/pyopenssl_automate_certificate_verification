@@ -8,7 +8,7 @@
 This repo uses `pyOpenSSL`.  It connects to a server and verifies the certificate chain.
 
 ```
-[*]OpenSSL: b'OpenSSL 1.1.1h  22 Sep 2020'
+******************************	Unit Tests for OpenSSL.SSL	******************************
 [*]Connect issued...
 [*]connected: httpbin.org	('3.211.1.78', 443)
 [*]Handshake succeeded...
@@ -19,6 +19,10 @@ This repo uses `pyOpenSSL`.  It connects to a server and verifies the certificat
         notAfter:  18-Feb-2021
         serial num: 15511154429359216763915851913648262204
         Expired: False
+        
+******************************	Unit Tests for OpenSSL.crypto	******************************
+[!]Certificate:	httpbin.org		        code:20		unable to get local issuer certificate
+[!]Certificate:	*.stackexchange.com		code:20		unable to get local issuer certificate
 ```
 
 `pyOpenSSL` is a thin wrapper on top of the `C` based `OpenSSL`.  `pyOpenSSL` is a good way to get familiar with the `C OpenSSL APIs`, `Structs` and `Flags`.  

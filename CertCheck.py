@@ -1,7 +1,5 @@
 
 from test_certs import (
-    good_leaf_cert_pem,
-    bad_leaf_cert_pem,
     int_ca_cert_pem,
     root_ca_cert_pem
 )
@@ -11,7 +9,8 @@ from OpenSSL.crypto import (
     X509Store,
     X509StoreContext,
     load_certificate,
-    FILETYPE_PEM
+    FILETYPE_PEM,
+    X509StoreContextError
 )
 from OpenSSL.SSL import (
     SSLEAY_VERSION,
@@ -30,7 +29,6 @@ class CertificateChecker:
             self.untrusted_leaf = load_certificate(FILETYPE_PEM, leaf_to_verify)
 
     def load_trust_store(self):
-        print("[*]Constructing Trust Store")
         root_cert = load_certificate(FILETYPE_PEM, root_ca_cert_pem)
         int_cert = load_certificate(FILETYPE_PEM, int_ca_cert_pem)
         self.trusted_certs.add_cert(root_cert)
@@ -41,7 +39,7 @@ class CertificateChecker:
             store_ctx = X509StoreContext(self.trusted_certs, self.untrusted_leaf)
             store_ctx.verify_certificate()
             return True
-        except OpenSSL.crypto.X509StoreContextError as e:
+        except X509StoreContextError as e:
             print('[!]Certificate:\t{0}\t\tcode:{1}\t\t{2}'.format(e.certificate.get_subject().CN, e.args[0][0], e.args[0][2]))
             return False
         except:

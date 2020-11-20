@@ -1,5 +1,17 @@
 import unittest
 from CertCheck import CertificateChecker
+from test_certs import (
+    int_ca_cert_pem,
+    root_ca_cert_pem,
+    good_leaf_cert_pem,
+    bad_leaf_cert_pem
+)
+from OpenSSL.crypto import (
+    X509Store,
+    load_certificate,
+    FILETYPE_PEM
+)
+
 
 class TestCertificateChecker(unittest.TestCase):
     def test_good_leaf_cert(self):
@@ -29,7 +41,3 @@ class TestCertificateChecker(unittest.TestCase):
         check = CertificateChecker(bad_leaf_cert_pem)
         self.assertTrue(isinstance(check.trusted_certs, OpenSSL.crypto.X509Store))
         self.assertTrue(isinstance(check.untrusted_leaf, OpenSSL.crypto.X509))
-
-
-if __name__ == '__main__':
-    unittest.main()

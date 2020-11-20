@@ -15,6 +15,7 @@ from OpenSSL.SSL import (
 from CertCheck import CertificateChecker
 from PyOpenSSLUnitTests import TestCertificateChecker
 
+
 def verify_cb(conn, cert, err_num, depth, ok):
     """
     Callback from context.set_verify(VERIFY_PEER, verify_cb)
@@ -68,6 +69,12 @@ def verify_cert_cert_from_host(host: str):
 
 if __name__ == '__main__':
     print(CertificateChecker.openssl_version())
+    print("{0}\tUnit Tests for OpenSSL.SSL\t{0}".format('***' * 10))
     verify_cert_cert_from_host('httpbin.org')
 
-
+    print("{0}\tUnit Tests for OpenSSL.crypto\t{0}".format('***' * 10))
+    tests = TestCertificateChecker()
+    tests.test_good_leaf_cert()
+    tests.test_partial_chain_allowed()
+    tests.test_no_int_ca_in_trust_store()
+    tests.test_bad_leaf_cert()
