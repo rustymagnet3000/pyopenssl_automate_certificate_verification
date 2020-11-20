@@ -13,7 +13,7 @@ from OpenSSL.SSL import (
     WantReadError
 )
 from CertCheck import CertificateChecker
-
+from PyOpenSSLUnitTests import TestCertificateChecker
 
 def verify_cb(conn, cert, err_num, depth, ok):
     """
@@ -25,7 +25,7 @@ def verify_cb(conn, cert, err_num, depth, ok):
     return ok
 
 
-def get_leaf_cert_from_host(host: str):
+def verify_cert_cert_from_host(host: str):
     """
         Create Stream socket and connects.  Blocking.  This is a connection oriented socket
         The SSLContext.wrap_socket()method returns an SSLSocket.
@@ -68,5 +68,6 @@ def get_leaf_cert_from_host(host: str):
 
 if __name__ == '__main__':
     print(CertificateChecker.openssl_version())
-    get_leaf_cert_from_host('httpbin.org')
+    verify_cert_cert_from_host('httpbin.org')
+
 
