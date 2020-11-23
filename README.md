@@ -5,7 +5,13 @@
 ### Usage
 `python3 main.py`
 ### Background
-This repo uses `pyOpenSSL`.  It connects to a server and verifies the certificate chain.
+This repo uses `pyOpenSSL`.  
+
+For a real-time lookup, the `main.py` script connects to a server and verifies the certificate chain.This relies on `OpenSSL.SSL` from `pyOpenSSL`.  
+
+For offline checks - when you have all the trusted and untrusted certificates locally - the `class CertificateChecker` performs the checks with `OpenSSL.crypto` from `pyOpenSSL`.
+
+
 
 ```
 ******************************	Unit Tests for OpenSSL.SSL	******************************
@@ -27,12 +33,14 @@ This repo uses `pyOpenSSL`.  It connects to a server and verifies the certificat
 
 `pyOpenSSL` is a thin wrapper on top of the `C` based `OpenSSL`.  `pyOpenSSL` is a good way to get familiar with the `C OpenSSL APIs`, `Structs` and `Flags`.  
 
-### Repo design
+### Design choices
 The `main.py` file relies on `OpenSSL.SSL` from `pyOpenSSL`.  The notable components:
   - Opens a `Socket` to a server.
   - `context = Context(TLSv1_2_METHOD)` create an object instance used for setting up new SSL connections.
   - The `context` sets `load_verify_locations` to a directory of Certificates.
   - The `context` sets `set_verify(VERIFY_PEER, verify_cb)` to require a certificate and then callback with the `verify` result.
+
+The `class CertificateChecker` relies on `OpenSSL.crypto` from `pyOpenSSL`.
 
 ### Out of band work
 Not all of the code here is done by `PyOpenSSL`. If you type `man verify` from a terminal it will show an `OpenSSL` help page.

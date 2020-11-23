@@ -1,6 +1,6 @@
 import unittest
-from CertCheck import CertificateChecker
-from test_certs import (
+from support.CertCheck import CertificateChecker
+from support.test_certs import (
     int_ca_cert_pem,
     root_ca_cert_pem,
     good_leaf_cert_pem,

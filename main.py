@@ -12,8 +12,8 @@ from OpenSSL.SSL import (
     VERIFY_PEER,
     WantReadError
 )
-from CertCheck import CertificateChecker
-from PyOpenSSLUnitTests import TestCertificateChecker
+from support.CertCheck import CertificateChecker
+from support.PyOpenSSLUnitTests import TestCertificateChecker
 
 
 def verify_cb(conn, cert, err_num, depth, ok):
@@ -22,7 +22,7 @@ def verify_cb(conn, cert, err_num, depth, ok):
     :return: ok
     """
     if not ok:
-        print('certificate', cert.get_subject().CN, 'chain depth', depth, 'verification failed:', err_num)
+        print('[!]Certificate problem:', cert.get_subject().CN, 'chain depth', depth, 'verification failed:', err_num)
     return ok
 
 
@@ -35,7 +35,7 @@ def verify_cert_cert_from_host(host: str):
     # # # # # # # # # # # Socket # # # # # # # # # # #
     sock = socket()
     sock.setblocking(True)
-    sock.connect_ex(sock.getsockname())                     # https://docs.python.org/2/library/socket.html
+    sock.connect_ex(sock.getsockname())
     des = (host, 443)
     print('[*]Connect issued...')
     sock.connect(des)
@@ -43,10 +43,9 @@ def verify_cert_cert_from_host(host: str):
 
     # # # # # # # # # # # Context # # # # # # # # # # #
     context = Context(TLSv1_2_METHOD)
-    context.set_options(OP_NO_SSLv2)
-    context.set_options(OP_NO_SSLv3)
-    context.set_options(OP_NO_TLSv1)
-    ca_dir = Path(getcwd() + '/ca_files')
+    context.set_options(OP_NO_SSLv2 | OP_NO_SSLv3 | OP_NO_TLSv1)
+    context.get_cert_store().set_flags(0x80000)
+    ca_dir = Path(getcwd() + '/support/ca_files')
     context.load_verify_locations(cafile=None, capath=ca_dir.__bytes__())
     context.set_verify(VERIFY_PEER, verify_cb)
 
@@ -70,11 +69,6 @@ def verify_cert_cert_from_host(host: str):
 if __name__ == '__main__':
     print(CertificateChecker.openssl_version())
     print("{0}\tUnit Tests for OpenSSL.SSL\t{0}".format('***' * 10))
-    verify_cert_cert_from_host('httpbin.org')
+    verify_cert_cert_from_host('stackoverflow.com')
 
-    print("{0}\tUnit Tests for OpenSSL.crypto\t{0}".format('***' * 10))
-    tests = TestCertificateChecker()
-    tests.test_good_leaf_cert()
-    tests.test_partial_chain_allowed()
-    tests.test_no_int_ca_in_trust_store()
-    tests.test_bad_leaf_cert()
+
