@@ -16,59 +16,74 @@ from support.CertCheck import CertificateChecker
 from support.PyOpenSSLUnitTests import TestCertificateChecker
 
 
-def verify_cb(conn, cert, err_num, depth, ok):
-    """
-    Callback from context.set_verify(VERIFY_PEER, verify_cb)
-    :return: ok
-    """
-    if not ok:
-        print('[!]Certificate problem:', cert.get_subject().CN, 'chain depth', depth, 'verification failed:', err_num)
-    return ok
+class OnlineCertVerify:
+    def __init__(self):
+        self.path_to_ca_certs = '/support/ca_files'
+        self.verify_flags = 0x80000                     # partial Chain allowed
+        self.context = self.set_context()
+        self.socket = self.set_socket()
+        self.tls_client = self.set_tls_client()
 
+    @staticmethod
+    def verify_cb(conn, cert, err_num, depth, ok):
+        """
+            Callback that holds the Cert Chain verify result
+        """
+        if not ok:
+            print('[!]Certificate problem:', cert.get_subject().CN, 'chain depth', depth, 'verification failed:', err_num)
+        return ok
 
-def verify_cert_cert_from_host(host: str):
-    """
-        Create Stream socket and connects.  Blocking.  This is a connection oriented socket
-        The SSLContext.wrap_socket()method returns an SSLSocket.
-        upgrade the socket to TLS without any certificate verification, to obtain the certificate in bytes
-    """
-    # # # # # # # # # # # Socket # # # # # # # # # # #
-    sock = socket()
-    sock.setblocking(True)
-    sock.connect_ex(sock.getsockname())
-    des = (host, 443)
-    print('[*]Connect issued...')
-    sock.connect(des)
-    print('[*]connected: {0}\t{1}'.format(host, sock.getpeername()))
+    def set_tls_client(self):
+        """
+            After the socket and context have been defined, setup TLS client
+        """
+        tls_clt = Connection(self.context, self.socket)
+        tls_clt.set_connect_state()  # set to work in client mode
+        return tls_clt
 
-    # # # # # # # # # # # Context # # # # # # # # # # #
-    context = Context(TLSv1_2_METHOD)
-    context.set_options(OP_NO_SSLv2 | OP_NO_SSLv3 | OP_NO_TLSv1)
-    context.get_cert_store().set_flags(0x80000)
-    ca_dir = Path(getcwd() + '/support/ca_files')
-    context.load_verify_locations(cafile=None, capath=ca_dir.__bytes__())
-    context.set_verify(VERIFY_PEER, verify_cb)
+    def set_socket(self):
+        """
+            Set the Socket, pre-handshake
+        """
+        sock = socket()
+        sock.setblocking(True)
+        sock.connect_ex(sock.getsockname())
+        return sock
 
-    # # # # # # # # # # # Create TLS client with OpenSSL.SSL.Context and socket # # # # # # # # # # #
-    tls_client = Connection(context, sock)
-    tls_client.set_connect_state()                          # set to work in client mode
-
-    try:
-        tls_client.do_handshake()
-        print('[*]Handshake succeeded...')
-        CertificateChecker.print_cert_info(tls_client.get_peer_certificate())
-    except WantReadError:
-        print("[-]WantReadError")
-    except:
-        print("[!]general exception")
-    finally:
-        sock.close()
-        return None
+    def set_context(self):
+        """
+            Set the OpenSSL.context
+        """
+        con = Context(TLSv1_2_METHOD)
+        con.set_options(OP_NO_SSLv2 | OP_NO_SSLv3 | OP_NO_TLSv1)
+        con.get_cert_store().set_flags(self.verify_flags)
+        con.load_verify_locations(cafile=None, capath=Path(getcwd() + self.path_to_ca_certs).__bytes__())
+        con.set_verify(VERIFY_PEER, OnlineCertVerify.verify_cb)
+        return con
 
 
 if __name__ == '__main__':
     print(CertificateChecker.openssl_version())
-    print("{0}\tUnit Tests for OpenSSL.SSL\t{0}".format('***' * 10))
-    verify_cert_cert_from_host('stackoverflow.com')
+
+    hosts = ['stackoverflow.com', 'httpbin.org']
+    verifier = OnlineCertVerify()
+    port = 443
+
+    for host in hosts:
+        des = (hosts, port)
+
+        try:
+            print('[*]Connect issuing...')
+            verifier.socket.connect(des)
+            print('[*]connected: {0}\t{1}'.format(host, verifier.socket.getpeername()))
+            verifier.tls_client.do_handshake()
+            print('[*]Handshake succeeded...')
+            CertificateChecker.print_cert_info(verifier.tls_client.get_peer_certificate())
+        except WantReadError:
+            print("[-]WantReadError")
+        except:
+            print("[!]general exception")
+        finally:
+            verifier.socket.close()
 
 
