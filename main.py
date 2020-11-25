@@ -19,22 +19,28 @@ from support.CertCheck import CertificateChecker
 from support.PyOpenSSLUnitTests import TestCertificateChecker
 
 
+class Results:
+    certs = {}
+
+
 class Verifier:
-    results = {}
+    results_list = []
 
     def __init__(self, ca_dir=Path(getcwd() + '/support/ca_files'),
                  c_rehash_loc=environ['HOME'] + '/openssl/bin/c_rehash'):
+        self.cert_hash_count = 0
         self.path_to_ca_certs = Verifier.verify_ca_dir_and_files(ca_dir)
         self.path_to_c_rehash = Verifier.check_c_rehash_exists(c_rehash_loc)
+        if self.path_to_ca_certs is None or self.path_to_c_rehash is None:
+            return
         self.verify_flags = 0x80000  # partial Chain allowed
-        self.cert_hash_count = 0
         self.context = self.set_context()
         self.run_c_rehash()
 
     @staticmethod
     def check_c_rehash_exists(c_rehash_location):
         """
-            OpenSSL ships /bin/c_rehash     Function checks it exists
+            OpenSSL ships /bin/c_rehash.  Function to check it exists locally
         """
         if not exists(c_rehash_location):
             print('[!]Cannot find c_rehash at:\t{0}'.format(c_rehash_location))
@@ -55,7 +61,6 @@ class Verifier:
         """
             rehash scans directories and calculates a hash value of each ".pem", ".crt", ".cer", or ".crl" file
         """
-
         process = subprocess.Popen([self.path_to_c_rehash, self.path_to_ca_certs],
                                    stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE)
@@ -72,19 +77,19 @@ class Verifier:
             print('[*]Found {0} certificate hash values in path:{1}'.format(self.cert_hash_count,
                                                                             self.path_to_ca_certs))
 
-
-
-
     @staticmethod
     def verify_cb(conn, cert, err_num, depth, ok):
         """
-            Callback that holds the Cert Chain verify result
+            Callback from OpenSSL. Invoked on each Certificate in Chain being checked.
         """
-        if ok:
-            Verifier.results[cert.get_subject().CN] = 'VERIFIED'
-        if not ok:
-            Verifier.results[cert.get_subject().CN] = {'[!]verify failed:{1}'.format(depth, err_num)}
+        b = {cert.get_subject().CN: ["pass" if ok else "fail", depth] }
+        Verifier.results_list.append(b)
+#        Verifier.results[depth, cert.get_subject().CN] = {'[!]verify failed:{}'.format(err_num)}
+
+    #    Verifier.result_stack.index(cert.get_subject().CN).append
         return ok
+
+
 
     def set_context(self):
         """
@@ -103,8 +108,8 @@ if __name__ == '__main__':
     hosts = ['stackoverflow.com', 'httpbin.org']
     port = 443
     verifier = Verifier()
-    if verifier.cert_hash_count > 0:
-        print("good shape")
+    if verifier.cert_hash_count == 0:
+        exit(99)
     for host in hosts:
         des = (host, port)
         sock = socket()
@@ -126,4 +131,6 @@ if __name__ == '__main__':
             print("[!]general exception")
         finally:
             sock.close()
-    print(Verifier.results)
+    for i in Verifier.results_list:
+        print(i)
+    print(Verifier.results_list)
