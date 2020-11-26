@@ -7,8 +7,9 @@ class CertNode:
 
 
 class SinglyLinkedList:
-    def __init__(self):
+    def __init__(self, name):
         self.head_val = None
+        self.name = name
 
     def at_end(self, new_cert: CertNode):
         if self.head_val is None:
@@ -19,11 +20,11 @@ class SinglyLinkedList:
             last_entry = last_entry.next_val
         last_entry.next_val = new_cert
 
-    def pretty_print(self):
+    def print_pretty_name(self):
+        print('\n' + ('*' * 10) + ' ' + str(self.name, 'utf-8') + ' ' + ('*' * 10))
+
+    def print_entire_chain(self):
         cert = self.head_val
         while cert is not None:
-            if cert.depth == 0:
-                print('[*]' + ('-' * 10) + ' {0}\t{1}'.format(cert.common_name, cert.result) + ('-' * 10) + '[*]')
-            else:
-                print('[*] {0}|{2}|\t\t{1}'.format(cert.result, cert.common_name, cert.depth))
+            print('[*] {0}\t|\t{2}\t|\t\t{1}'.format(cert.result, cert.common_name, cert.depth))
             cert = cert.next_val

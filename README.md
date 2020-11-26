@@ -15,20 +15,27 @@ For offline checks - when you have all the trusted and untrusted certificates lo
 
 ```
 ******************************	Unit Tests for OpenSSL.SSL	******************************
-[*]Connect issued...
-[*]connected: httpbin.org	('3.211.1.78', 443)
-[*]Handshake succeeded...
+[*]OpenSSL: b'OpenSSL 1.1.1h  22 Sep 2020'
+[*]c_rehash:	b'Doing /path/python_openssl_playground/support/ca_files\n'
+[*]Found 2 certificate hash values in path:/path/to/ca-files
+[*]connected: stackoverflow.com	('151.101.129.69', 443)
+[*]connected: httpbin.org	('52.2.65.80', 443)
+[*]connected: github.com	('140.82.121.4', 443)
+[*]connected: google.com	('216.58.212.238', 443)
 
-        commonName: httpbin.org
-        issuer: Amazon
-        notBefore: 18-Jan-2020
-        notAfter:  18-Feb-2021
-        serial num: 15511154429359216763915851913648262204
-        Expired: False
-        
-******************************	Unit Tests for OpenSSL.crypto	******************************
-[!]Certificate:	httpbin.org		        code:20		unable to get local issuer certificate
-[!]Certificate:	*.stackexchange.com		code:20		unable to get local issuer certificate
+********** stackoverflow.com **********
+[*] pass	|	1	|		Let's Encrypt Authority X3
+[*] pass	|	0	|		*.stackexchange.com
+
+********** httpbin.org **********
+[*] pass	|	1	|		Amazon
+[*] pass	|	0	|		httpbin.org
+
+********** github.com **********
+[*] fail:20	|	1	|		DigiCert SHA2 High Assurance Server CA
+
+********** google.com **********
+[*] fail:20	|	1	|		GTS CA 1O1
 ```
 
 `pyOpenSSL` is a thin wrapper on top of the `C` based `OpenSSL`.  `pyOpenSSL` is a good way to get familiar with the `C OpenSSL APIs`, `Structs` and `Flags`.  

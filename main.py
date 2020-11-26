@@ -65,7 +65,7 @@ class Verifier:
         if stderr.__len__() > 0 or stdout.__len__() == 0:
             print('[*]Error during c_rehash step:\t{0}'.format(stderr))
             return None
-        print('[*]c_rehash:\t{0}'.format(stdout))
+        print('[*]c_rehash:\t{0}'.format(str(stdout, 'utf-8')))
 
         for file in listdir(self.path_to_ca_certs):
             if file.endswith('.0'):
@@ -82,10 +82,9 @@ class Verifier:
             This only works, with the --partial-flag that was added to the Context
             This needs updating, when the --partial-flag is removed
         """
-
         result = "pass" if ok else "fail:{}".format(err_num)
         if depth == 1:
-            cert_chain = SinglyLinkedList()
+            cert_chain = SinglyLinkedList(conn.get_servername())
             cert_chain.head_val = CertNode(result, depth, cert.get_subject().CN)
             Verifier.certificate_chains.append(cert_chain)
         else:
@@ -109,7 +108,7 @@ class Verifier:
 
 if __name__ == '__main__':
     print(CertificateChecker.openssl_version())
-    hosts = ['stackoverflow.com', 'httpbin.org', 'github.com', 'google.com']
+    hosts = ['stackoverflow.com', 'httpbin.org', 'github.com', 'google.com', 'blackhole-sun.deadlink']
     port = 443
     verifier = Verifier()
     if verifier.cert_hash_count == 0:
@@ -122,9 +121,10 @@ if __name__ == '__main__':
         tls_client = Connection(verifier.context, sock)
         tls_client.set_tlsext_host_name(bytes(host, 'utf-8'))   # Ensures ServerName when Verify callback invokes
         tls_client.set_connect_state()                          # set to work in client mode
-        sock.connect(des)
-        print('[*]connected: {0}\t{1}'.format(host, sock.getpeername()))
+
         try:
+            sock.connect(des)                                   # Try block to capture dead endpoints
+            print('[*]connected: {0}\t{1}'.format(host, sock.getpeername()))
             tls_client.do_handshake()
         except WantReadError:
             print("[!]WantReadError")
@@ -134,5 +134,6 @@ if __name__ == '__main__':
             print("[!]general exception")
         finally:
             sock.close()
-    for i in Verifier.certificate_chains:
-        i.pretty_print()
+    for chain in Verifier.certificate_chains:
+        chain.print_pretty_name()
+        chain.print_entire_chain()
