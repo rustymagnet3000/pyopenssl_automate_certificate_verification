@@ -22,5 +22,8 @@ class SinglyLinkedList:
     def pretty_print(self):
         cert = self.head_val
         while cert is not None:
-            print('[*] {0}|{2}|\t\t{1}'.format(cert.result, cert.common_name, cert.depth))
+            if cert.depth == 0:
+                print('[*]' + ('-' * 10) + ' {0}\t{1}'.format(cert.common_name, cert.result) + ('-' * 10) + '[*]')
+            else:
+                print('[*] {0}|{2}|\t\t{1}'.format(cert.result, cert.common_name, cert.depth))
             cert = cert.next_val

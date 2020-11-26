@@ -20,10 +20,6 @@ from support.CertChainLList import CertNode, SinglyLinkedList
 from support.PyOpenSSLUnitTests import TestCertificateChecker
 
 
-class Results:
-    certs = {}
-
-
 class Verifier:
     certificate_chains = []
 
@@ -82,17 +78,20 @@ class Verifier:
     def verify_cb(conn, cert, err_num, depth, ok):
         """
             Callback from OpenSSL. Invoked on each Certificate in Chain being checked.
+            The code creates a new Linked List to represent Cert Chain. Set the Head to Leaf Certificate
+            This only works, with the --partial-flag that was added to the Context
+            This needs updating, when the --partial-flag is removed
         """
-        result = "pass" if ok else "fail"
 
-        # create new Linked List to represent Cert Chain. Set the Head to Leaf Certificate
+        result = "pass" if ok else "fail:{}".format(err_num)
         if depth == 1:
             cert_chain = SinglyLinkedList()
             cert_chain.head_val = CertNode(result, depth, cert.get_subject().CN)
             Verifier.certificate_chains.append(cert_chain)
         else:
             cert = CertNode(result, depth, cert.get_subject().CN)
-            Verifier.certificate_chains[-1:].at_end(cert)
+            latest_cert_chain = Verifier.certificate_chains[-1]
+            latest_cert_chain.at_end(cert)
 
         return ok
 
@@ -110,7 +109,7 @@ class Verifier:
 
 if __name__ == '__main__':
     print(CertificateChecker.openssl_version())
-    hosts = ['stackoverflow.com', 'httpbin.org']
+    hosts = ['stackoverflow.com', 'httpbin.org', 'github.com', 'google.com']
     port = 443
     verifier = Verifier()
     if verifier.cert_hash_count == 0:
@@ -121,20 +120,19 @@ if __name__ == '__main__':
         sock.setblocking(True)
         sock.connect_ex(sock.getsockname())
         tls_client = Connection(verifier.context, sock)
-        tls_client.set_connect_state()  # set to work in client mode
-        print('\n[*]Setting up socket to:{}'.format(host))
+        tls_client.set_tlsext_host_name(bytes(host, 'utf-8'))   # Ensures ServerName when Verify callback invokes
+        tls_client.set_connect_state()                          # set to work in client mode
         sock.connect(des)
         print('[*]connected: {0}\t{1}'.format(host, sock.getpeername()))
-        tls_client.do_handshake()
         try:
-            print("")
+            tls_client.do_handshake()
         except WantReadError:
             print("[!]WantReadError")
-        except Error as e:
-            print("[!]OpenSSL.SSL.Error {0}", e)
+        except Error as e:  # OpenSSL.SSL.Error
+            pass                                                # I already write the errors to a LinkedList
         except:
             print("[!]general exception")
         finally:
             sock.close()
     for i in Verifier.certificate_chains:
-        print(i.pretty_print())
+        i.pretty_print()
