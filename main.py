@@ -16,6 +16,7 @@ from OpenSSL.SSL import (
     Error
 )
 from support.CertCheck import CertificateChecker
+from support.CertChainLList import CertNode, SinglyLinkedList
 from support.PyOpenSSLUnitTests import TestCertificateChecker
 
 
@@ -24,7 +25,7 @@ class Results:
 
 
 class Verifier:
-    results_list = []
+    certificate_chains = []
 
     def __init__(self, ca_dir=Path(getcwd() + '/support/ca_files'),
                  c_rehash_loc=environ['HOME'] + '/openssl/bin/c_rehash'):
@@ -82,14 +83,18 @@ class Verifier:
         """
             Callback from OpenSSL. Invoked on each Certificate in Chain being checked.
         """
-        b = {cert.get_subject().CN: ["pass" if ok else "fail", depth] }
-        Verifier.results_list.append(b)
-#        Verifier.results[depth, cert.get_subject().CN] = {'[!]verify failed:{}'.format(err_num)}
+        result = "pass" if ok else "fail"
 
-    #    Verifier.result_stack.index(cert.get_subject().CN).append
+        # create new Linked List to represent Cert Chain. Set the Head to Leaf Certificate
+        if depth == 1:
+            cert_chain = SinglyLinkedList()
+            cert_chain.head_val = CertNode(result, depth, cert.get_subject().CN)
+            Verifier.certificate_chains.append(cert_chain)
+        else:
+            cert = CertNode(result, depth, cert.get_subject().CN)
+            Verifier.certificate_chains[-1:].at_end(cert)
+
         return ok
-
-
 
     def set_context(self):
         """
@@ -131,6 +136,5 @@ if __name__ == '__main__':
             print("[!]general exception")
         finally:
             sock.close()
-    for i in Verifier.results_list:
-        print(i)
-    print(Verifier.results_list)
+    for i in Verifier.certificate_chains:
+        print(i.pretty_print())
