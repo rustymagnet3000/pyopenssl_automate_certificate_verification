@@ -3,7 +3,7 @@ from pathlib import Path
 import subprocess
 from os import getcwd, listdir, environ
 from os.path import isdir, exists
-from socket import socket
+from socket import socket, gaierror
 from OpenSSL.SSL import (
     Connection,
     TLSv1_2_METHOD,
@@ -126,10 +126,12 @@ if __name__ == '__main__':
             sock.connect(des)                                   # Try block to capture dead endpoints
             print('[*]connected: {0}\t{1}'.format(host, sock.getpeername()))
             tls_client.do_handshake()
+        except gaierror as e:
+            print("[!]Socket error: {0}\t{1}", host, e)         # This catches dead links
         except WantReadError:
             print("[!]WantReadError")
-        except Error as e:  # OpenSSL.SSL.Error
-            pass                                                # I already write the errors to a LinkedList
+        except Error as e:                                      # OpenSSL.SSL.Error
+            pass                                                # pass: I already write the errors to a LinkedList
         except:
             print("[!]general exception")
         finally:
