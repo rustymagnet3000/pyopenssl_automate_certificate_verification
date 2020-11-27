@@ -18,6 +18,7 @@ from OpenSSL.SSL import (
 from support.CertCheck import CertificateChecker
 from support.CertChainLList import CertNode, SinglyLinkedList
 from support.PyOpenSSLUnitTests import TestCertificateChecker
+from texttable import Texttable
 
 
 class Verifier:
@@ -63,16 +64,13 @@ class Verifier:
                                    stderr=subprocess.PIPE)
         stdout, stderr = process.communicate()
         if stderr.__len__() > 0 or stdout.__len__() == 0:
-            print('[*]Error during c_rehash step:\t{0}'.format(stderr))
+            print('[!]Error during c_rehash step:\t{0}'.format(stderr))
             return None
-        print('[*]c_rehash:\t{0}'.format(str(stdout, 'utf-8')))
+        print('[*]Creating symbolic links for OpenSSL:\n\t\t\t{0}'.format(str(stdout, 'utf-8')))
 
         for file in listdir(self.path_to_ca_certs):
             if file.endswith('.0'):
                 self.cert_hash_count += 1
-        if self.cert_hash_count > 0:
-            print('[*]Found {0} certificate hash values in path:{1}'.format(self.cert_hash_count,
-                                                                            self.path_to_ca_certs))
 
     @staticmethod
     def verify_cb(conn, cert, err_num, depth, ok):
@@ -113,6 +111,11 @@ if __name__ == '__main__':
     verifier = Verifier()
     if verifier.cert_hash_count == 0:
         exit(99)
+    table = Texttable()
+    table.set_cols_width([30, 10, 30])
+    table.set_deco(table.BORDER | Texttable.HEADER)
+    table.header(['Hostname', 'result', 'server IP'])
+
     for host in hosts:
         des = (host, port)
         sock = socket()
@@ -124,10 +127,10 @@ if __name__ == '__main__':
 
         try:
             sock.connect(des)                                   # Try block to capture dead endpoints
-            print('[*]connected: {0}\t{1}'.format(host, sock.getpeername()))
+            table.add_row([host, 'pass', sock.getpeername()])
             tls_client.do_handshake()
         except gaierror as e:
-            print("[!]Socket error: {0}\t{1}", host, e)         # This catches dead links
+            table.add_row([host, 'fail', 'Socket error'])
         except WantReadError:
             print("[!]WantReadError")
         except Error as e:                                      # OpenSSL.SSL.Error
@@ -136,6 +139,7 @@ if __name__ == '__main__':
             print("[!]general exception")
         finally:
             sock.close()
+
+    print("\n" + table.draw() + "\n")
     for chain in Verifier.certificate_chains:
-        chain.print_pretty_name()
         chain.print_entire_chain()

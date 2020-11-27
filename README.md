@@ -15,27 +15,51 @@ For offline checks - when you have all the trusted and untrusted certificates lo
 
 ```
 ******************************	Unit Tests for OpenSSL.SSL	******************************
-[*]OpenSSL: b'OpenSSL 1.1.1h  22 Sep 2020'
-[*]c_rehash:	b'Doing /path/python_openssl_playground/support/ca_files\n'
-[*]Found 2 certificate hash values in path:/path/to/ca-files
-[*]connected: stackoverflow.com	('151.101.129.69', 443)
-[*]connected: httpbin.org	('52.2.65.80', 443)
-[*]connected: github.com	('140.82.121.4', 443)
-[*]connected: google.com	('216.58.212.238', 443)
+[*]OpenSSL 1.1.1h  22 Sep 2020
+[*]Creating symbolic links for OpenSSL:
+			Doing /path/to/python_openssl_playground/support/ca_files
 
-********** stackoverflow.com **********
-[*] pass	|	1	|		Let's Encrypt Authority X3
-[*] pass	|	0	|		*.stackexchange.com
++------------------------------------------------------------------------------+
+|            Hostname                result               server IP            |
++==============================================================================+
+| stackoverflow.com                pass         ('151.101.129.69', 443)        |
+| httpbin.org                      pass         ('52.2.65.80', 443)            |
+| github.com                       pass         ('140.82.121.3', 443)          |
+| google.com                       pass         ('216.58.213.110', 443)        |
+| blackhole-sun.deadlink           fail         Socket error                   |
++------------------------------------------------------------------------------+
 
-********** httpbin.org **********
-[*] pass	|	1	|		Amazon
-[*] pass	|	0	|		httpbin.org
 
-********** github.com **********
-[*] fail:20	|	1	|		DigiCert SHA2 High Assurance Server CA
++--------------------------------------------------------------------+
+|            stackoverflow.com                 Result       Depth    |
++====================================================================+
+| Let's Encrypt Authority X3                 pass         1          |
+| *.stackexchange.com                        pass         0          |
++--------------------------------------------------------------------+
 
-********** google.com **********
-[*] fail:20	|	1	|		GTS CA 1O1
+
++--------------------------------------------------------------------+
+|               httpbin.org                    Result       Depth    |
++====================================================================+
+| Amazon                                     pass         1          |
+| httpbin.org                                pass         0          |
++--------------------------------------------------------------------+
+
+
++--------------------------------------------------------------------+
+|                github.com                    Result       Depth    |
++====================================================================+
+| DigiCert SHA2 High Assurance Server CA     fail:20      1          |
++--------------------------------------------------------------------+
+
+
++--------------------------------------------------------------------+
+|                google.com                    Result       Depth    |
++====================================================================+
+| GTS CA 1O1                                 fail:20      1          |
++--------------------------------------------------------------------+
+
+
 ```
 
 `pyOpenSSL` is a thin wrapper on top of the `C` based `OpenSSL`.  `pyOpenSSL` is a good way to get familiar with the `C OpenSSL APIs`, `Structs` and `Flags`.  

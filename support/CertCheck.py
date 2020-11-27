@@ -66,7 +66,7 @@ class CertificateChecker:
 
     @staticmethod
     def openssl_version():
-        return "[*]OpenSSL: {openssl}".format(openssl=SSLeay_version(SSLEAY_VERSION))
+        return '[*]{0}'.format(str(SSLeay_version(SSLEAY_VERSION), 'utf-8'))
 
     @staticmethod
     def pretty_date(date_from_cert: bytes):

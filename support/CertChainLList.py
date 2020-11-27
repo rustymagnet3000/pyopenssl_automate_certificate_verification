@@ -1,3 +1,6 @@
+from texttable import Texttable
+
+
 class CertNode:
     def __init__(self, result, depth, common_name):
         self.common_name = common_name
@@ -21,10 +24,16 @@ class SinglyLinkedList:
         last_entry.next_val = new_cert
 
     def print_pretty_name(self):
-        print('\n' + ('*' * 10) + ' ' + str(self.name, 'utf-8') + ' ' + ('*' * 10))
+        return str(self.name, 'utf-8')
 
     def print_entire_chain(self):
         cert = self.head_val
+        table = Texttable()
+        table.set_cols_width([40, 10, 10])
+        table.set_deco(table.BORDER | Texttable.HEADER)
+
+        table.header([self.print_pretty_name(), 'Result', 'Depth'])
         while cert is not None:
-            print('[*] {0}\t|\t{2}\t|\t\t{1}'.format(cert.result, cert.common_name, cert.depth))
+            table.add_row([cert.common_name, cert.result, cert.depth])
             cert = cert.next_val
+        print("\n" + table.draw() + "\n")
