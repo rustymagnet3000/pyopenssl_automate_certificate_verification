@@ -30,7 +30,7 @@ class SinglyLinkedList:
         cert = self.head_val
         table = Texttable()
         table.set_cols_width([40, 10, 10])
-        table.set_deco(table.BORDER | Texttable.HEADER)
+        table.set_deco(table.BORDER | Texttable.HEADER | Texttable.VLINES )
 
         table.header([self.print_pretty_name(), 'Result', 'Depth'])
         while cert is not None:
