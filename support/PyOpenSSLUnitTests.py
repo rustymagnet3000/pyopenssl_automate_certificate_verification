@@ -19,29 +19,26 @@ from OpenSSL.crypto import (
 
 class TestOpenSSLVerifySpeed(unittest.TestCase):
 
-    def setUp(self):
-        self.startTime = time.time()
-
     def tearDown(self):
         t = time.time() - self.startTime
-        print('%s: %.3f' % (self.id(), t))
+        print('[*]%s: %.3f' % (self.id(), t))
 
     def testDoHandshakeSingleServer(self, host='stackoverflow.com'):
         verifier = Verifier()
+        Verifier.certificate_chains = []
         assert verifier.cert_hash_count > 0
+        self.startTime = time.time()
         port = 443
         des = (host, port)
         sock = socket()
         sock.setblocking(True)
         sock.connect_ex(sock.getsockname())
-        tls_client = Connection(self.__class__.verifier.context, sock)
+        tls_client = Connection(verifier.context, sock)
         tls_client.set_tlsext_host_name(bytes(host, 'utf-8'))  # Ensures ServerName when Verify callback invokes
         tls_client.set_connect_state()  # set to work in client mode
-
         try:
             sock.connect(des)  # Try block to capture dead endpoints
             tls_client.do_handshake()
-            print('handshake done')
         except:
             print("[!]catch all exception")
         finally:
