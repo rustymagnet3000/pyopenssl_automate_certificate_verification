@@ -7,7 +7,6 @@ from OpenSSL.SSL import (
 )
 import argparse
 from support.Verifier import Verifier
-from support.CertCheck import CertificateChecker
 from support.HostNameClean import HostNameCleaner
 from texttable import Texttable
 
@@ -21,11 +20,7 @@ if __name__ == '__main__':
     with args.infile as file:
         sanitized_hosts = HostNameCleaner(file)
 
-    hosts = sanitized_hosts.clean_hostnames()
-
-    if hosts:
-        print(len(hosts))
-
+    hosts = sanitized_hosts.hostnames
     port = 443
     verifier = Verifier()
     if verifier.cert_hash_count == 0:
@@ -46,7 +41,7 @@ if __name__ == '__main__':
 
         try:
             sock.connect(des)                                   # Try block to capture dead endpoints
-            table.add_row([host, 'pass', sock.getpeername()])
+            table.add_row([host, 'connected', sock.getpeername()])
             tls_client.do_handshake()
         except gaierror as e:
             table.add_row([host, 'fail', 'Socket error'])

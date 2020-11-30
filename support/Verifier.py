@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 from pathlib import Path
 import subprocess
+import time
 from os import getcwd, listdir, environ
 from os.path import isdir, exists
 from OpenSSL.SSL import (
@@ -81,8 +82,8 @@ class Verifier:
         else:
             cert = CertNode(result, depth, cert.get_subject().CN)
             latest_cert_chain = Verifier.certificate_chains[-1]
+            latest_cert_chain.end_time = time.time()
             latest_cert_chain.at_end(cert)
-
         return ok
 
     def set_context(self):

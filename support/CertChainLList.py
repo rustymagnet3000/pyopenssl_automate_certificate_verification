@@ -1,4 +1,5 @@
 from texttable import Texttable
+import time
 
 
 class CertNode:
@@ -13,6 +14,8 @@ class SinglyLinkedList:
     def __init__(self, name):
         self.head_val = None
         self.name = name
+        self.start_time = time.time()
+        self.end_time = None
 
     def at_end(self, new_cert: CertNode):
         if self.head_val is None:
@@ -24,7 +27,10 @@ class SinglyLinkedList:
         last_entry.next_val = new_cert
 
     def print_pretty_name(self):
-        return str(self.name, 'utf-8')
+        if self.end_time is None:
+            return str(self.name, 'utf-8')
+        else:
+            return '{0}  ( {1:.2f} )'.format(str(self.name, 'utf-8'), self.end_time - self.start_time)
 
     def print_entire_chain(self):
         cert = self.head_val
