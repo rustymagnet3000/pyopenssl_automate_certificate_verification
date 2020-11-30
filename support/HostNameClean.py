@@ -34,12 +34,12 @@ class HostNameCleaner:
     def is_valid_hostname(hostname):
         hostname_regex = re.compile("(?!-)[A-Z\d-]{5,63}(?<!-)$", re.IGNORECASE)
         num_periods = re.findall(r'\.', hostname)
-        num_non_alpha = re.findall(r'\W', hostname)
+        #num_non_alpha = re.findall(r'\W', hostname)
         if len(hostname) > 255:
             return None
-        if len(num_periods) == 0 or len(num_periods) > 4 or len(num_non_alpha) > len(num_periods):
+        if len(num_periods) == 0 or len(num_periods) > 7:   # remove hostnames with whitespace ( spaces / tabs )
             return None
-        if len(re.findall(r'\s+', hostname)) > 0:    # remove hostnames with whitespace ( spaces / tabs )
+        if len(re.findall(r'\s+', hostname)) > 0:           # remove hostnames with whitespace ( spaces / tabs )
             return None
         if all(hostname_regex.match(x) for x in hostname.split(".")) is not True:
             return hostname

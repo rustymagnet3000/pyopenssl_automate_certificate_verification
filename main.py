@@ -6,6 +6,7 @@ from OpenSSL.SSL import (
     Error,
     WantReadError
 )
+
 import argparse
 from support.Verifier import Verifier
 from support.HostNameClean import HostNameCleaner
@@ -15,7 +16,7 @@ from texttable import Texttable
 
 
 if __name__ == '__main__':
-    print(CertificateChecker.openssl_version())
+    CertificateChecker.openssl_version()
     parser = argparse.ArgumentParser(description="PyOpenSSL")
     parser.add_argument('--infile', type=argparse.FileType('r', encoding='UTF-8'), required=True)
     args = parser.parse_args()
@@ -26,10 +27,12 @@ if __name__ == '__main__':
     hosts = sanitized_hosts.hostnames
     port = 443
     verifier = Verifier()
+
     if verifier.cert_hash_count == 0:
         exit(99)
+
     table = Texttable()
-    table.set_cols_width([30, 10, 30])
+    table.set_cols_width([50, 10, 30])
     table.set_deco(table.BORDER | Texttable.HEADER | Texttable.VLINES )
     table.header(['Hostname', 'result', 'server IP'])
 
@@ -51,6 +54,9 @@ if __name__ == '__main__':
             sock.connect(des)                                   # Try block to capture dead endpoints
             table.add_row([host, 'connected', sock.getpeername()])
             tls_client.do_handshake()
+            cert_chain.tls_version = tls_client.get_cipher_name()
+            cert_chain.cipher_version = tls_client.get_cipher_version()
+            new_cert_chain = tls_client.get_peer_cert_chain()
             cert_chain.end_time = time.time()
         except gaierror as e:
             table.add_row([host, 'fail', 'Socket error'])
@@ -65,7 +71,7 @@ if __name__ == '__main__':
 
     print("\n" + table.draw() + "\n")
 
-    for chain in Verifier.certificate_chains:
-        chain.print_chain_details()
+    # for chain in Verifier.certificate_chains:
+    #     chain.print_chain_details()
 
-    verifier.print_time_to_handshake()
+    Verifier.print_time_to_handshake()

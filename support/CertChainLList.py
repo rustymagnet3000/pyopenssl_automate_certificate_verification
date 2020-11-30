@@ -14,6 +14,8 @@ class SinglyLinkedList:
     def __init__(self, name):
         self.head_val = None
         self.name = name
+        self.tls_version = None
+        self.cipher_version = None
         self.start_time = time.time()
         self.end_time = None
 
@@ -38,11 +40,10 @@ class SinglyLinkedList:
         else:
             return '{0:.3f}'.format(self.end_time - self.start_time)
 
-
     def print_chain_details(self):
         cert = self.head_val
-        table = Texttable()
-        table.set_cols_width([40, 10, 10])
+        table = Texttable(max_width=100)
+        table.set_cols_width([70, 10, 10])
         table.set_deco(table.BORDER | Texttable.HEADER | Texttable.VLINES)
 
         table.header([self.print_pretty_name(), 'Result', 'Depth'])

@@ -3,7 +3,7 @@ from support.test_certs import (
     int_ca_cert_pem,
     root_ca_cert_pem
 )
-
+from OpenSSL.version import __version__
 from OpenSSL.crypto import (
     X509,
     X509Store,
@@ -66,7 +66,8 @@ class CertificateChecker:
 
     @staticmethod
     def openssl_version():
-        return '[*]{0}'.format(str(SSLeay_version(SSLEAY_VERSION), 'utf-8'))
+        print('[*]PyOpenSSL:{0}\t'.format(__version__))
+        print('[*]{0}'.format(str(SSLeay_version(SSLEAY_VERSION), 'utf-8')))
 
     @staticmethod
     def pretty_date(date_from_cert: bytes):

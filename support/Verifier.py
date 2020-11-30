@@ -11,7 +11,7 @@ from OpenSSL.SSL import (
     Context,
     VERIFY_PEER
 )
-from support.CertChainLList import CertNode, SinglyLinkedList
+from support.CertChainLList import CertNode
 from texttable import Texttable
 
 
@@ -101,14 +101,15 @@ class Verifier:
         con.set_verify(VERIFY_PEER, Verifier.verify_cb)
         return con
 
-    def print_time_to_handshake(self):
+    @staticmethod
+    def print_time_to_handshake():
         """
-            Set the OpenSSL.context. Notice it sets a flag ont the Cert Store associated to the Context
+            Pretty print the hostname, time to tls-handshake
         """
-        table = Texttable(max_width=80)
-        table.set_cols_width([30, 20])
+        table = Texttable(max_width=130)
+        table.set_cols_width([50, 10, 10, 40])
         table.set_deco(table.BORDER | Texttable.HEADER | Texttable.VLINES)
-        table.header(['Hostname', 'Time'])
+        table.header(['Hostname', 'Time', 'Cipher', 'TLS Protocol'])
         for chain in Verifier.certificate_chains:
-            table.add_row([chain.name, chain.pretty_time()])
+            table.add_row([chain.name, chain.pretty_time(), chain.cipher_version, chain.tls_version])
         print("\n" + table.draw() + "\n")
