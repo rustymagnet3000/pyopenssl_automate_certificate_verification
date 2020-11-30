@@ -1,4 +1,4 @@
-
+#!/usr/bin/python3
 from support.test_certs import (
     int_ca_cert_pem,
     root_ca_cert_pem

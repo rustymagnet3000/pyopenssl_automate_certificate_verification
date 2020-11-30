@@ -15,7 +15,7 @@ class SinglyLinkedList:
         self.head_val = None
         self.name = name
         self.start_time = time.time()
-        self.time_to_verify = None
+        self.end_time = None
 
     def at_end(self, new_cert: CertNode):
         if self.head_val is None:
@@ -27,10 +27,10 @@ class SinglyLinkedList:
         last_entry.next_val = new_cert
 
     def print_pretty_name(self):
-        if self.time_to_verify is None:
-            return str(self.name, 'utf-8')
+        if self.end_time is None:
+            return self.name
         else:
-            return '{0}  ( {1:.4f} )'.format(str(self.name, 'utf-8'), self.time_to_verify - self.start_time)
+            return '{0}  ( {1:.4f} )'.format(self.name, self.end_time - self.start_time)
 
     def print_entire_chain(self):
         cert = self.head_val

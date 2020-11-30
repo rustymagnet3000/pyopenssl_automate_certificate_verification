@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 from pathlib import Path
 import subprocess
-import time
 from os import getcwd, listdir, environ
 from os.path import isdir, exists
 from OpenSSL.SSL import (
@@ -70,24 +69,23 @@ class Verifier:
     def verify_cb(conn, cert, err_num, depth, ok):
         """
             Callback from OpenSSL. Invoked on each Certificate in Chain being checked.
-            The code creates a new Linked List to represent Cert Chain. Set the Head to Leaf Certificate
-            This only works, with the --partial-flag that was added to the Context
-            This needs updating, when the --partial-flag is removed
+            The code loops through a List of Linked Lists. These Linked Lists represent each Certificate Chain.
+            if it finds the Linked List a matching servername it wants to adds Certs to that chain
+            If there is no Head, set it with Cert being verified ( as OpenSSL starts at the top of hierarchy )
+            If not, add it at the end of the Linked List
+            Break to avoid going through all the other Linked Lists, if the Cert was added
         """
         result = "pass" if ok else "fail:{}".format(err_num)
-        if depth == 1:
-            cert_chain = SinglyLinkedList(conn.get_servername())
-            print('Start: {0:.2f}'.format(cert_chain.start_time))
-            cert_chain.head_val = CertNode(result, depth, cert.get_subject().CN)
-            Verifier.certificate_chains.append(cert_chain)
-        else:
-            cert = CertNode(result, depth, cert.get_subject().CN)
-            latest_cert_chain = Verifier.certificate_chains[-1]
-            latest_cert_chain.time_to_verify = time.time()
-            print('{2}\tStart: {0:.2f}\tTime taken:{1:.2f}'.format(latest_cert_chain.start_time,
-                                                                   latest_cert_chain.time_to_verify,
-                                                                   latest_cert_chain.name))
-            latest_cert_chain.at_end(cert)
+
+        for chain in Verifier.certificate_chains:
+            if (bytes(chain.name, 'utf-8')) in conn.get_servername():
+                cert = CertNode(result, depth, cert.get_subject().CN)
+                if chain.head_val is None:
+                    chain.head_val = cert
+                    break
+                else:
+                    chain.at_end(cert)
+                    break
         return ok
 
     def set_context(self):
