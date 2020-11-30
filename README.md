@@ -11,13 +11,10 @@ For a real-time lookup, the `main.py` script connects to a server and verifies t
 
 For offline checks - when you have all the trusted and untrusted certificates locally - the `class CertificateChecker` performs the checks with `OpenSSL.crypto` from `pyOpenSSL`.
 
-
-
+### Output
 ```
-******************************	Unit Tests for OpenSSL.SSL	******************************
 [*]OpenSSL 1.1.1h  22 Sep 2020
-[*]Creating symbolic links for OpenSSL:
-			Doing /path/to/python_openssl_playground/support/ca_files
+[*]Creating symbolic links for OpenSSL
 
 +------------------------------------------------------------------------------+
 |            Hostname                result               server IP            |
@@ -62,10 +59,10 @@ For offline checks - when you have all the trusted and untrusted certificates lo
 
 ```
 
-`pyOpenSSL` is a thin wrapper on top of the `C` based `OpenSSL`.  `pyOpenSSL` is a good way to get familiar with the `C OpenSSL APIs`, `Structs` and `Flags`.  
-
 ### Design choices
-The `main.py` file relies on `OpenSSL.SSL` from `pyOpenSSL`.  The notable components:
+The `main.py` file relies on `OpenSSL.SSL` from `pyOpenSSL`.  `pyOpenSSL` is a thin wrapper on top of the `C` based `OpenSSL`.  `pyOpenSSL` is a good way to get familiar with the `C OpenSSL APIs`, `Structs` and `Flags`.  
+
+###### The notable components:
   - Opens a `Socket` to a server.
   - `context = Context(TLSv1_2_METHOD)` create an object instance used for setting up new SSL connections.
   - The `context` sets `load_verify_locations` to a directory of Certificates.
@@ -73,8 +70,8 @@ The `main.py` file relies on `OpenSSL.SSL` from `pyOpenSSL`.  The notable compon
 
 The `class CertificateChecker` relies on `OpenSSL.crypto` from `pyOpenSSL`.
 
-### Out of band work
-Not all of the code here is done by `PyOpenSSL`. If you type `man verify` from a terminal it will show an `OpenSSL` help page.
+### Underneath the code
+Don't ignore `c_rehash`.  If you type `man verify` from a terminal it will show an `OpenSSL` help page:
 
 > -CApath directory
 >     A directory of trusted certificates. The certificates should have names of
@@ -83,19 +80,19 @@ Not all of the code here is done by `PyOpenSSL`. If you type `man verify` from a
 >     Under Unix the c_rehash script will automatically create symbolic links to a
 >     directory of certificates.
 
-To do this:
+The code in this repo assumes you have a directory of Certificates - that represents your `Trust Store` - and you have the `c_rehash`tool installed:
 ```
-export CERTS=/Users/{path_to_your_certs}
-/path/to/openssl/bin/c_rehash ${CERTS}
-```
-Don't ignore `c_rehash`.
+class Verifier:
+    def __init__(self, ca_dir=Path(getcwd() + '/support/ca_files'),
+                 c_rehash_loc=environ['HOME'] + '/openssl/bin/c_rehash'):
+```              
 
 > rehash scans directories and calculates a hash value of each ".pem", ".crt", ".cer", or ".crl" file in the specified directory list and creates symbolic links for each file
 
 If you don't have the `symbolic links` the `verify step` will fail.
 
 ### A good directory of Root and Int Certificate Authorities
-In the below example, you have two certificates and two symbolic links created by `c_rehash`.
+After `c_rehash` runs on two certificates, it will auto generate two symbolic links:
 ```
 4f06f81d.0
 2401d14f.0
@@ -103,9 +100,3 @@ httpbin_int_ca.pem
 stackoverflow_int_ca.pem
 ```
 Wait!  Don't you need the full `certificate chain`?  That depends on what `flags` you passed into the `Context` for `OpenSSL`. You can find the `Partial-Chain` flag added in this repo.  Just the `Int CA` is enough to verify a peer. No `Root CA` required.
-
-### Not for production
-A reminder from https://pypi.org/project/pyOpenSSL/:
-
-> Note: The Python Cryptographic Authority strongly suggests the use of pyca/cryptography where possible. If you are using pyOpenSSL for anything other than making a TLS connection you should move to cryptography and drop your pyOpenSSL dependency.
-

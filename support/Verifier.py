@@ -60,7 +60,7 @@ class Verifier:
         if stderr.__len__() > 0 or stdout.__len__() == 0:
             print('[!]Error during c_rehash step:\t{0}'.format(stderr))
             return None
-        print('[*]Creating symbolic links for OpenSSL:\n\t\t\t{0}'.format(str(stdout, 'utf-8')))
+        print('[*]Creating symbolic links for OpenSSL')
 
         for file in listdir(self.path_to_ca_certs):
             if file.endswith('.0'):
@@ -77,18 +77,22 @@ class Verifier:
         result = "pass" if ok else "fail:{}".format(err_num)
         if depth == 1:
             cert_chain = SinglyLinkedList(conn.get_servername())
+            print('Start: {0:.2f}'.format(cert_chain.start_time))
             cert_chain.head_val = CertNode(result, depth, cert.get_subject().CN)
             Verifier.certificate_chains.append(cert_chain)
         else:
             cert = CertNode(result, depth, cert.get_subject().CN)
             latest_cert_chain = Verifier.certificate_chains[-1]
-            latest_cert_chain.end_time = time.time()
+            latest_cert_chain.time_to_verify = time.time()
+            print('{2}\tStart: {0:.2f}\tTime taken:{1:.2f}'.format(latest_cert_chain.start_time,
+                                                                   latest_cert_chain.time_to_verify,
+                                                                   latest_cert_chain.name))
             latest_cert_chain.at_end(cert)
         return ok
 
     def set_context(self):
         """
-            Set the OpenSSL.context
+            Set the OpenSSL.context. Notice it sets a flag ont the Cert Store associated to the Context
         """
         con = Context(TLSv1_2_METHOD)
         con.set_options(OP_NO_SSLv2 | OP_NO_SSLv3 | OP_NO_TLSv1)

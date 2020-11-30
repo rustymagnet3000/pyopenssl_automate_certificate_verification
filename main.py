@@ -8,11 +8,12 @@ from OpenSSL.SSL import (
 import argparse
 from support.Verifier import Verifier
 from support.HostNameClean import HostNameCleaner
+from support.CertCheck import CertificateChecker
 from texttable import Texttable
 
 
 if __name__ == '__main__':
-
+    print(CertificateChecker.openssl_version())
     parser = argparse.ArgumentParser(description="PyOpenSSL")
     parser.add_argument('--infile', type=argparse.FileType('r', encoding='UTF-8'), required=True)
     args = parser.parse_args()
