@@ -47,7 +47,6 @@ if __name__ == '__main__':
         # Add Linked List to global List
         Verifier.certificate_chains.append(cert_chain)
         try:
-            # update with time, after the TLS Handshake successfully completed
             cert_chain.start_time = time.time()
             sock.connect(des)                                   # Try block to capture dead endpoints
             table.add_row([host, 'connected', sock.getpeername()])
@@ -67,4 +66,6 @@ if __name__ == '__main__':
     print("\n" + table.draw() + "\n")
 
     for chain in Verifier.certificate_chains:
-        chain.print_entire_chain()
+        chain.print_chain_details()
+
+    verifier.print_time_to_handshake()

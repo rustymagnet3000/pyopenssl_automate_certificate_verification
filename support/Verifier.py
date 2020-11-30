@@ -12,6 +12,7 @@ from OpenSSL.SSL import (
     VERIFY_PEER
 )
 from support.CertChainLList import CertNode, SinglyLinkedList
+from texttable import Texttable
 
 
 class Verifier:
@@ -59,11 +60,12 @@ class Verifier:
         if stderr.__len__() > 0 or stdout.__len__() == 0:
             print('[!]Error during c_rehash step:\t{0}'.format(stderr))
             return None
-        print('[*]Creating symbolic links for OpenSSL')
 
         for file in listdir(self.path_to_ca_certs):
             if file.endswith('.0'):
                 self.cert_hash_count += 1
+
+        print('[*]Creating symbolic links for OpenSSL\n[*]Certificates in Trust Store :{}'.format(self.cert_hash_count))
 
     @staticmethod
     def verify_cb(conn, cert, err_num, depth, ok):
@@ -98,3 +100,15 @@ class Verifier:
         con.load_verify_locations(cafile=None, capath=self.path_to_ca_certs.__bytes__())
         con.set_verify(VERIFY_PEER, Verifier.verify_cb)
         return con
+
+    def print_time_to_handshake(self):
+        """
+            Set the OpenSSL.context. Notice it sets a flag ont the Cert Store associated to the Context
+        """
+        table = Texttable(max_width=80)
+        table.set_cols_width([30, 20])
+        table.set_deco(table.BORDER | Texttable.HEADER | Texttable.VLINES)
+        table.header(['Hostname', 'Time'])
+        for chain in Verifier.certificate_chains:
+            table.add_row([chain.name, chain.pretty_time()])
+        print("\n" + table.draw() + "\n")

@@ -30,13 +30,20 @@ class SinglyLinkedList:
         if self.end_time is None:
             return self.name
         else:
-            return '{0}  ( {1:.4f} )'.format(self.name, self.end_time - self.start_time)
+            return '{0}  ( {1:.3f} )'.format(self.name, self.end_time - self.start_time)
 
-    def print_entire_chain(self):
+    def pretty_time(self):
+        if self.end_time is None:
+            return 'failed verify'
+        else:
+            return '{0:.3f}'.format(self.end_time - self.start_time)
+
+
+    def print_chain_details(self):
         cert = self.head_val
         table = Texttable()
         table.set_cols_width([40, 10, 10])
-        table.set_deco(table.BORDER | Texttable.HEADER | Texttable.VLINES )
+        table.set_deco(table.BORDER | Texttable.HEADER | Texttable.VLINES)
 
         table.header([self.print_pretty_name(), 'Result', 'Depth'])
         while cert is not None:
