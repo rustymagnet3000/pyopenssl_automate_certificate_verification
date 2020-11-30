@@ -83,3 +83,27 @@ httpbin_int_ca.pem
 stackoverflow_int_ca.pem
 ```
 Wait!  Don't you need the full `certificate chain`?  That depends on what `flags` you passed into the `Context` for `OpenSSL`. You can find the `Partial-Chain` flag added in this repo.  Just the `Int CA` is enough to verify a peer. No `Root CA` required.
+
+### Testing old versions of OpenSSL
+Is it possible to downgrade the `OpenSSL library` used by `pyOpenSSL`?  Firstly, it is useful to check:
+
+```
+from OpenSSL.debug import _env_info
+
+if __name__ == '__main__':
+    print(_env_info)
+```
+That reveals:
+```
+pyOpenSSL: 20.0.0
+cryptography: 3.2.1
+cffi: 1.14.3
+cryptography's compiled against OpenSSL: OpenSSL 1.1.1h  22 Sep 2020
+cryptography's linked OpenSSL: OpenSSL 1.1.1h  22 Sep 2020
+Python's OpenSSL: OpenSSL 1.1.1g  21 Apr 2020
+Python executable: /Users/a9006113/ydvenv/bin/python
+Python version: 3.8.5 (default, Sep 18 2020, 11:34:27) 
+[Clang 11.0.3 (clang-1103.0.32.62)]
+Platform: darwin
+```
+To lower the `OpenSSL version`, lower the `Cryptography` version.  With a `Python Virtual Environment` it is simple and safe to have a throwaway setup, when testing multiple versions.
