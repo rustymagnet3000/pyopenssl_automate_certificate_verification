@@ -3,7 +3,7 @@
 ### Setup
 `pip3 install -r requirements.txt`
 ### Usage
-`python3 main.py`
+`python3 main.py --infile hostnames.txt`
 ### Background
 This repo uses `pyOpenSSL`.  
 
@@ -95,8 +95,14 @@ Don't ignore `c_rehash`.
 If you don't have the `symbolic links` the `verify step` will fail.
 
 ### A good directory of Root and Int Certificate Authorities
-
-![ca-files](/images/2020/11/ca-files.png)
+In the below example, you have two certificates and two symbolic links created by `c_rehash`.
+```
+4f06f81d.0
+2401d14f.0
+httpbin_int_ca.pem
+stackoverflow_int_ca.pem
+```
+Wait!  Don't you need the full `certificate chain`?  That depends on what `flags` you passed into the `Context` for `OpenSSL`. You can find the `Partial-Chain` flag added in this repo.  Just the `Int CA` is enough to verify a peer. No `Root CA` required.
 
 ### Not for production
 A reminder from https://pypi.org/project/pyOpenSSL/:
