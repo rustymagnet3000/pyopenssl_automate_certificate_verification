@@ -94,6 +94,7 @@ class Verifier:
         """
         con = Context(TLSv1_2_METHOD)
         con.set_options(OP_NO_SSLv2 | OP_NO_SSLv3 | OP_NO_TLSv1)
+        con.set_timeout(3)
         con.get_cert_store().set_flags(self.verify_flags)
         con.load_verify_locations(cafile=None, capath=bytes(self.path_to_ca_certs, 'utf-8'))
         con.set_verify(VERIFY_PEER, Verifier.verify_cb)

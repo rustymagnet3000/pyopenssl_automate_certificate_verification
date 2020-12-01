@@ -53,11 +53,8 @@ if __name__ == '__main__':
     hosts = sanitized_hosts.hostnames
     port = 443
 
-    if args.certs_path and args.rehash_path:
-        verifier = Verifier(ca_dir=args.certs_path, c_rehash_loc=args.rehash_path)
-
-    if verifier.cert_hash_count == 0:
-        exit(99)
+    verifier = Verifier(ca_dir=args.certs_path, c_rehash_loc=args.rehash_path)
+    assert (verifier.cert_hash_count > 0)
 
     table = Texttable()
     table.set_cols_width([50, 10, 30])
@@ -72,16 +69,16 @@ if __name__ == '__main__':
         tls_client = Connection(verifier.context, sock)
         tls_client.set_tlsext_host_name(bytes(host, 'utf-8'))   # Ensures ServerName when Verify callback invokes
         tls_client.set_connect_state()                          # set to work in client mode
-
         # create an empty linked list, that sets the Name and Start time
         cert_chain = SinglyLinkedList(host)
         # Add Linked List to global List
         Verifier.certificate_chains.append(cert_chain)
+        cert_chain.start_time = time.time()
         try:
-            cert_chain.start_time = time.time()
-            sock.connect(des)                                   # Try block to capture dead endpoints
+            sock.connect(des)  # Try block to capture dead endpoints
             table.add_row([host, 'connected', sock.getpeername()])
             tls_client.do_handshake()
+
             cert_chain.tls_version = tls_client.get_cipher_name()
             cert_chain.cipher_version = tls_client.get_cipher_version()
             new_cert_chain = tls_client.get_peer_cert_chain()
@@ -91,13 +88,13 @@ if __name__ == '__main__':
         except WantReadError:
             print("[!]WantReadError")
         except Error as e:                                      # OpenSSL.SSL.Error
+            print("[!]error with {0}\t({1}".format(host, e))
             pass                                                # pass: I already write the errors to a LinkedList
         except:
             print("[!]general exception")
         finally:
+            print("\n" + table.draw() + "\n")
             sock.close()
-
-    print("\n" + table.draw() + "\n")
 
     for chain in Verifier.certificate_chains:
         chain.print_chain_details()
