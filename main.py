@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 from socket import socket, gaierror
 import time
+from os import getcwd, environ
 from OpenSSL.SSL import (
     Connection,
     Error,
@@ -15,25 +16,52 @@ from support.CertChainLList import SinglyLinkedList
 from texttable import Texttable
 
 
+parser = argparse.ArgumentParser(description="PyOpenSSL")
+
+parser.add_argument(
+    '--hostnames-file',
+    '-f',
+    help='Path to text file that includes hostnames to check',
+    type=argparse.FileType('r', encoding='UTF-8'),
+    required=True)
+
+parser.add_argument(
+    "-r",
+    "--rehash-path",
+    help='Path to OpenSSL\'s c_rehash tool. This generates the symbolic required for OpenSSL\'s Verify() to work'
+         'If you don\'t include this value, it will default to ~/openssl/bin',
+    default=environ['HOME'] + '/openssl/bin/c_rehash',
+    required=False)
+
+
+parser.add_argument(
+    "-c",
+    "--certs-path",
+    help='Path to directory of Root and Intermediate Cert Authority certificates',
+    default=getcwd() + '/support/ca_files',
+    required=False)
+
+args = parser.parse_args()
+
+
 if __name__ == '__main__':
     CertificateChecker.openssl_version()
-    parser = argparse.ArgumentParser(description="PyOpenSSL")
-    parser.add_argument('--infile', type=argparse.FileType('r', encoding='UTF-8'), required=True)
-    args = parser.parse_args()
 
-    with args.infile as file:
+    with args.hostnames_file as file:
         sanitized_hosts = HostNameCleaner(file)
 
     hosts = sanitized_hosts.hostnames
     port = 443
-    verifier = Verifier()
+
+    if args.certs_path and args.rehash_path:
+        verifier = Verifier(ca_dir=args.certs_path, c_rehash_loc=args.rehash_path)
 
     if verifier.cert_hash_count == 0:
         exit(99)
 
     table = Texttable()
     table.set_cols_width([50, 10, 30])
-    table.set_deco(table.BORDER | Texttable.HEADER | Texttable.VLINES )
+    table.set_deco(table.BORDER | Texttable.HEADER | Texttable.VLINES)
     table.header(['Hostname', 'result', 'server IP'])
 
     for host in hosts:
@@ -71,7 +99,7 @@ if __name__ == '__main__':
 
     print("\n" + table.draw() + "\n")
 
-    # for chain in Verifier.certificate_chains:
-    #     chain.print_chain_details()
+    for chain in Verifier.certificate_chains:
+        chain.print_chain_details()
 
-    Verifier.print_time_to_handshake()
+#    Verifier.print_time_to_handshake()

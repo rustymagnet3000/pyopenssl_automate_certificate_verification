@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 from texttable import Texttable
 import time
 

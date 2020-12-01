@@ -1,7 +1,6 @@
 #!/usr/bin/python3
-from pathlib import Path
 import subprocess
-from os import getcwd, listdir, environ
+from os import listdir
 from os.path import isdir, exists
 from OpenSSL.SSL import (
     TLSv1_2_METHOD,
@@ -18,8 +17,7 @@ from texttable import Texttable
 class Verifier:
     certificate_chains = []
 
-    def __init__(self, ca_dir=Path(getcwd() + '/support/ca_files'),
-                 c_rehash_loc=environ['HOME'] + '/openssl/bin/c_rehash'):
+    def __init__(self, ca_dir, c_rehash_loc):
         self.cert_hash_count = 0
         self.path_to_ca_certs = Verifier.verify_ca_dir_and_files(ca_dir)
         self.path_to_c_rehash = Verifier.check_c_rehash_exists(c_rehash_loc)
@@ -42,7 +40,7 @@ class Verifier:
     @staticmethod
     def verify_ca_dir_and_files(ca_dir):
         """
-            Check CA directory exists
+            Check CA directory exists. Input is a str ( not a Path ).
         """
         if not exists(ca_dir) and not isdir(ca_dir):
             print('[!]CA Directory of certificates not found:\t{0}'.format(ca_dir))
@@ -97,7 +95,7 @@ class Verifier:
         con = Context(TLSv1_2_METHOD)
         con.set_options(OP_NO_SSLv2 | OP_NO_SSLv3 | OP_NO_TLSv1)
         con.get_cert_store().set_flags(self.verify_flags)
-        con.load_verify_locations(cafile=None, capath=self.path_to_ca_certs.__bytes__())
+        con.load_verify_locations(cafile=None, capath=bytes(self.path_to_ca_certs, 'utf-8'))
         con.set_verify(VERIFY_PEER, Verifier.verify_cb)
         return con
 
