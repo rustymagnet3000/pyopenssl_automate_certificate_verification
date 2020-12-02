@@ -47,32 +47,29 @@ if __name__ == '__main__':
 
     with args.hostnames_file as file:
         sanitized_hosts = HostNameCleaner(file)
-
     hosts = sanitized_hosts.hostnames
+
+    # one off items
     verifier = Verifier(ca_dir=args.certs_path, c_rehash_loc=args.rehash_path)
     assert (verifier.cert_hash_count > 0)
 
     for host in hosts:
-
-        tls_client = Connection(verifier.context, sock)
+        s = SocketSetup()
+        s.connect_socket(host)
+        tls_client = Connection(verifier.context, s.sock)
         tls_client.set_tlsext_host_name(bytes(host, 'utf-8'))   # Ensures ServerName when Verify callback invokes
-        # create an empty linked list, that sets the Name and Start time
         cert_chain = SinglyLinkedList(host)
-        # Add Linked List to global List
         Verifier.certificate_chains.append(cert_chain)
         cert_chain.start_time = time.time()
 
         try:
-
-
             tls_client.set_connect_state()  # set to work in client mode
-            tls_client.do_handshake()
-        except gaierror as e:
-            table.add_row([host, 'fail', 'Socket error'])
+            # tls_client.do_handshake()
+
         except WantReadError:
             print("[!]WantReadError")
         except Error as e:                                      # OpenSSL.SSL.Error
-            print("[!]error with {0}\t({1}".format(host, e))
+            print("[!]error with {0}\t{1}".format(host, e))
             pass                                                # pass: I already write the errors to a LinkedList
         except:
             print("[!]general exception")
@@ -81,9 +78,9 @@ if __name__ == '__main__':
             cert_chain.cipher_version = tls_client.get_cipher_version()
             new_cert_chain = tls_client.get_peer_cert_chain()
             cert_chain.end_time = time.time()
-            sock.close()
+            s.sock.close()
 
-    print("\n" + table.draw() + "\n")
+    s.print_all_connections()
 
     for chain in Verifier.certificate_chains:
         chain.print_chain_details()

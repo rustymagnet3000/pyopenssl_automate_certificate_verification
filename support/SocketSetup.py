@@ -4,21 +4,22 @@ from texttable import Texttable
 
 
 class SocketSetup:
-    def __init__(self, host):
+    table = Texttable()
+    table.set_cols_width([50, 10, 30])
+    table.set_deco(table.BORDER | Texttable.HEADER | Texttable.VLINES)
+    table.header(['Hostname', 'result', 'server IP'])
+    
+    def __init__(self):
         self.port = 443
-        self.des = (host, self.port)
-        self.sock = socket()
-        self.sock.setblocking(False)
+        self.sock = socket(AF_INET, SOCK_STREAM)
 
+    def connect_socket(self, host):
+        result = self.sock.connect_ex((host, self.port))
+        if result == 0:
+            SocketSetup.table.add_row([host, 'connected', self.sock.getpeername()])
+        else:
+            SocketSetup.table.add_row([host, 'fail ({})'.format(result), 'Socket error. Unreachable host'])
 
-    def yd_connect(self)
-        self.sock.connect(self.des)  # Try block to capture dead endpoints
-
-
-    table.add_row([host, 'connected', sock.getpeername()])
-
-    def print_all_connections(self):
-        table = Texttable()
-        table.set_cols_width([50, 10, 30])
-        table.set_deco(table.BORDER | Texttable.HEADER | Texttable.VLINES)
-        table.header(['Hostname', 'result', 'server IP'])
+    @staticmethod
+    def print_all_connections():
+        print("\n" + SocketSetup.table.draw() + "\n")
