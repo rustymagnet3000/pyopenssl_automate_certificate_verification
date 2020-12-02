@@ -3,13 +3,29 @@
 ### Setup
 `pip3 install -r requirements.txt`
 ### Usage
-`python3 main.py --infile hostnames.txt`
+```
+# use default locations for CA certificates and the c_rehash tool
+python3 main.py -f hostnames.txt
+
+# specify locations for CA certs and c_rehash
+python3 main.py -f hostnames.txt -c /ca_certs/ -r ~/openssl/bin/c_rehash
+```
 ### Background
 This repo uses `pyOpenSSL`.  
 
-For a real-time lookup, the `main.py` script connects to a server and verifies the certificate chain.This relies on `OpenSSL.SSL` from `pyOpenSSL`.  
+The `main.py` script relies on `OpenSSL.SSL` from `pyOpenSSL`.  
 
-For offline checks - when you have all the trusted and untrusted certificates locally - the `class CertificateChecker` performs the checks with `OpenSSL.crypto` from `pyOpenSSL`.
+This is akin to:
+```
+openssl s_client -partial_chain -CApath /path/to/certs -connect httpbin.org:443
+```
+The code will also throw away hostnames that don't respond to a `Socket.connect()`.
+
+For offline checks - when you have all the trusted and untrusted certificates locally - the `class CertificateChecker` uses `OpenSSL.crypto` from `pyOpenSSL`. This is the equivalent of:
+
+```
+openssl verify -partial_chain -CApath /path/to/certs httpbin-org-leaf.pem
+```
 
 ### Output
 ```

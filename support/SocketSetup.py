@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-from socket import socket, gaierror, AF_INET, SOCK_STREAM
+from socket import socket, gaierror, timeout, AF_INET, SOCK_STREAM
 from texttable import Texttable
 
 
@@ -14,6 +14,8 @@ class SocketSetup:
         self.host = host
         self.port = 443
         self.sock = socket(AF_INET, SOCK_STREAM)
+        self.sock.setblocking(False)
+        self.sock.settimeout(3.0)
 
     def connect_socket(self):
         des = (self.host, self.port)
@@ -21,6 +23,9 @@ class SocketSetup:
             self.sock.connect(des)
             SocketSetup.table.add_row([self.host, 'connected', self.sock.getpeername()])
             SocketSetup.open_sockets.append(self)
+        except timeout:
+            SocketSetup.table.add_row([self.host, 'fail', 'timeout'])
+            SocketSetup.bad_sockets += 1
         except gaierror as e:
             SocketSetup.table.add_row([self.host, 'fail', 'Socket.gaierror'])
             SocketSetup.bad_sockets += 1
