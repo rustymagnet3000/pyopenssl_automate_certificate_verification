@@ -93,7 +93,7 @@ class Verifier:
             Set the OpenSSL.context. Notice it sets a flag ont the Cert Store associated to the Context
         """
         context = Context(TLSv1_2_METHOD)
-        context.set_timeout(5)
+        context.set_timeout(3)
         context.set_options(OP_NO_SSLv2 | OP_NO_SSLv3 | OP_NO_TLSv1)
         context.get_cert_store().set_flags(self.verify_flags)
         context.load_verify_locations(cafile=None, capath=bytes(self.path_to_ca_certs, 'utf-8'))

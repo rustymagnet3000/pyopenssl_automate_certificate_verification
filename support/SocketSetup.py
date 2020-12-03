@@ -9,18 +9,17 @@ class SocketSetup:
     table.set_deco(table.BORDER | Texttable.HEADER | Texttable.VLINES)
     open_sockets = []
     bad_sockets = 0
+    port = 443
 
     def __init__(self, host):
         self.host = host
-        self.port = 443
         self.sock = socket(AF_INET, SOCK_STREAM)
         self.sock.setblocking(False)
-        self.sock.settimeout(3.0)
+        self.sock.settimeout(2.0)
 
     def connect_socket(self):
-        des = (self.host, self.port)
         try:
-            self.sock.connect(des)
+            self.sock.connect((self.host, SocketSetup.port))
             SocketSetup.table.add_row([self.host, 'connected', self.sock.getpeername()])
             SocketSetup.open_sockets.append(self)
         except timeout:
