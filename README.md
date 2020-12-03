@@ -4,11 +4,23 @@
 `pip3 install -r requirements.txt`
 ### Usage
 ```
-# use default locations for CA certificates and the c_rehash tool
-python3 main.py -f hostnames.txt
+usage: main.py [-h] --hostnames-file HOSTNAMES_FILE [-r REHASH_PATH] [-c CERTS_PATH] [-s] [-t] [-all]
 
-# specify locations for CA certs and c_rehash
-python3 main.py -f hostnames.txt -c /ca_certs/ -r ~/openssl/bin/c_rehash
+python3 main.py -f hostnames.txt                                                # use default locations
+python3 main.py -f hostnames.txt -c /ca_certs/ -r ~/openssl/bin/c_rehash        # specify locations for CA certs and c_rehash
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --hostnames-file HOSTNAMES_FILE, -f HOSTNAMES_FILE
+                        Path to text file that includes hostnames to check
+  -r REHASH_PATH, --rehash-path REHASH_PATH
+                        Path to OpenSSL's c_rehash tool. This generates the symbolic required for OpenSSL's Verify() to
+                        workIf you don't include this value, it will default to ~/openssl/bin
+  -c CERTS_PATH, --certs-path CERTS_PATH
+                        Path to directory of Root and Intermediate Cert Authority certificates
+  -s, --socket-info     Prints the I.P. address returned from from getaddrinfo()
+  -t, --time            Prints the time for tls_client.do_handshake() to complete
+  -all, --all           Prints all information available
 ```
 ### Background
 This repo uses `pyOpenSSL`.  

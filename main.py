@@ -13,8 +13,24 @@ from support.CertCheck import CertificateChecker
 from support.CertChainLList import SinglyLinkedList
 
 
-if __name__ == '__main__':
+def summary_print():
+    if args.socket_info:
+        SocketSetup.print_all_connections()
+    elif args.time:
+        Verifier.print_time_to_handshake()
+    elif args.all:
+        SocketSetup.print_all_connections()
+        Verifier.print_time_to_handshake()
+        for chain in Verifier.certificate_chains:
+            chain.print_chain_details()
+    else:
+        SocketSetup.print_all_connections()
 
+
+#   Verifier.print_time_to_handshake()
+
+
+if __name__ == '__main__':
     CertificateChecker.openssl_version()
     args = parser.parse_args()
     with args.hostnames_file as file:
@@ -27,8 +43,6 @@ if __name__ == '__main__':
     for host in hosts:
         s = SocketSetup(host)
         s.connect_socket()
-
-    SocketSetup.print_all_connections()
 
     for s in SocketSetup.open_sockets:
         s.sock.setblocking(True)
@@ -54,8 +68,5 @@ if __name__ == '__main__':
             cert_chain.end_time = time.time()
 
     SocketSetup.clean_up()
+    summary_print()
 
-    for chain in Verifier.certificate_chains:
-        chain.print_chain_details()
-
-#    Verifier.print_time_to_handshake()
