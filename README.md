@@ -1,5 +1,4 @@
 # PyOpenSSL playground
-
 ### Setup
 `pip3 install -r requirements.txt`
 ### Usage
@@ -11,8 +10,7 @@ python3 main.py -f hostnames.txt -c /ca_certs/ -r ~/openssl/bin/c_rehash        
 
 optional arguments:
   -h, --help            show this help message and exit
-  --hostnames-file HOSTNAMES_FILE, -f HOSTNAMES_FILE
-                        Path to text file that includes hostnames to check
+  --hostnames-file      Path to text file that includes hostnames to check
   -r REHASH_PATH, --rehash-path REHASH_PATH
                         Path to OpenSSL's c_rehash tool. This generates the symbolic required for OpenSSL's Verify() to
                         workIf you don't include this value, it will default to ~/openssl/bin
