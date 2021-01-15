@@ -16,13 +16,12 @@ class YDSocket:
         self.sock = socket(AF_INET, SOCK_STREAM)
 
     def __enter__(self):
+        self.sock.setblocking(True)
         self.sock.connect((self.host, YDSocket.port))
-        YDSocket.open_sockets.append(self)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        for s in YDSocket.open_sockets:
-            s.sock.close()
+        self.sock.close()
 
     @staticmethod
     def print_all_connections():
