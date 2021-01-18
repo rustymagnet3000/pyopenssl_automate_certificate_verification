@@ -1,9 +1,7 @@
 #!/usr/bin/python3
 from OpenSSL.SSL import Error, WantReadError
+from OpenSSL.crypto import X509, load_certificate, FILETYPE_PEM
 from socket import gaierror, timeout
-
-from OpenSSL.crypto import X509, FILETYPE_ASN1, FILETYPE_PEM, load_certificate
-
 from support.YDCertFilesChecker import YDCertFilesChecker
 from support.YDSocket import YDSocket
 from support.YDTLSClient import YDTLSClient
@@ -11,7 +9,8 @@ from support.argparsing import parser
 from support.Verifier import Verifier
 from support.HostNameClean import HostNameCleaner
 from support.CertCheck import LeafVerify
-
+import os
+import asn1
 
 def summary_print():
     if args.socket_info:
@@ -31,9 +30,21 @@ if __name__ == "__main__":
     args = parser.parse_args()
     verifier = Verifier(ca_dir=args.certs_path, c_rehash_loc=args.rehash_path)
     assert (verifier.cert_hash_count > 0)
-    YDCertFilesChecker(verifier.path_to_ca_certs)
-
-
+    decoder = asn1.Decoder()
+    for file in os.listdir(verifier.path_to_ca_certs):
+        if file.endswith('crt') or file.endswith('.pem') or file.endswith('.der'):
+            with open(os.path.join(verifier.path_to_ca_certs, file), "r") as f:
+                cert_buf = f.read()
+                cert = load_certificate(FILETYPE_PEM, cert_buf)
+                with YDCertFilesChecker(cert) as c:
+                    #c.print_cert_info()
+                    for index in range(c.cert.get_extension_count()):
+                        ext = cert.get_extension(index)
+                        print(ext.get_short_name())
+                        decoder.start(ext.get_data())
+                        tag, value = decoder.read()
+                        print(tag, type(value))
+    print(YDCertFilesChecker.summary)
 
 
 

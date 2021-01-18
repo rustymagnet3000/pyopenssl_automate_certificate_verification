@@ -1,2 +1,4 @@
 pyOpenSSL
-texttable
+texttable~=1.6.3
+six~=1.11.0
+termcolor~=1.1.0
