@@ -2,7 +2,6 @@
 from socket import (
     socket, getaddrinfo, AF_INET, SOCK_STREAM, IPPROTO_TCP
 )
-
 from texttable import Texttable
 
 
@@ -10,7 +9,7 @@ class YDSocket:
     table = Texttable()
     table.set_cols_width([50, 10, 30])
     table.set_deco(table.BORDER | Texttable.HEADER | Texttable.VLINES)
-    open_sockets = []
+    open_sockets = 0
     bad_sockets = 0
     port = 443
 
@@ -29,7 +28,6 @@ class YDSocket:
 
     @staticmethod
     def print_all_connections():
-        YDSocket.table.header(['Hostnames', 'result', 'Good {0} / Bad {1} '.format(len(YDSocket.open_sockets),
-                                                                                      YDSocket.bad_sockets)])
+        YDSocket.table.header(['Hostnames', 'result', 'Good {0} / Bad {1} '.format(YDSocket.open_sockets,
+                                                                                   YDSocket.bad_sockets)])
         print("\n" + YDSocket.table.draw() + "\n")
-
