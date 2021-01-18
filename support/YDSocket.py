@@ -1,5 +1,8 @@
 #!/usr/bin/python3
-from socket import socket, AF_INET, SOCK_STREAM
+from socket import (
+    socket, getaddrinfo, AF_INET, SOCK_STREAM, IPPROTO_TCP
+)
+
 from texttable import Texttable
 
 
@@ -17,6 +20,7 @@ class YDSocket:
 
     def __enter__(self):
         self.sock.setblocking(True)
+        getaddrinfo(self.host, YDSocket.port, proto=IPPROTO_TCP)
         self.sock.connect((self.host, YDSocket.port))
         return self
 
