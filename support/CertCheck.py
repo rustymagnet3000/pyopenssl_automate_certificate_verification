@@ -19,7 +19,7 @@ from OpenSSL.SSL import (
 import datetime
 
 
-class CertificateChecker:
+class LeafVerify:
     def __init__(self, leaf_to_verify):
         self.trusted_certs = X509Store()
         self.load_trust_store()
@@ -57,8 +57,8 @@ class CertificateChecker:
         '''.format(
             commonname=cert.get_subject().CN,
             issuer=cert.get_issuer().CN,
-            notbefore=CertificateChecker.pretty_date(cert.get_notBefore()),
-            notafter=CertificateChecker.pretty_date(cert.get_notAfter()),
+            notbefore=LeafVerify.pretty_date(cert.get_notBefore()),
+            notafter=LeafVerify.pretty_date(cert.get_notAfter()),
             serial_number=cert.get_serial_number(),
             expired=cert.has_expired()
         )

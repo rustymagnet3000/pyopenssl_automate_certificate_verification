@@ -3,14 +3,15 @@ from OpenSSL.SSL import Error, WantReadError
 from socket import gaierror, timeout
 
 from OpenSSL.crypto import X509, FILETYPE_ASN1, FILETYPE_PEM, load_certificate
+
+from support.YDCertFilesChecker import YDCertFilesChecker
 from support.YDSocket import YDSocket
 from support.YDTLSClient import YDTLSClient
 from support.argparsing import parser
 from support.Verifier import Verifier
 from support.HostNameClean import HostNameCleaner
-from support.CertCheck import CertificateChecker
-import asyncio
-import os
+from support.CertCheck import LeafVerify
+
 
 def summary_print():
     if args.socket_info:
@@ -26,23 +27,15 @@ def summary_print():
         YDSocket.print_all_connections()
 
 
-async def main():
-    CertificateChecker.openssl_version()
+if __name__ == "__main__":
+    args = parser.parse_args()
     verifier = Verifier(ca_dir=args.certs_path, c_rehash_loc=args.rehash_path)
     assert (verifier.cert_hash_count > 0)
-
-    for file in os.listdir(verifier.path_to_ca_certs):
-        with open(os.path.join(verifier.path_to_ca_certs, file), "r") as f:
-            cert_buf = f.read()
-            cert = load_certificate(FILETYPE_PEM, cert_buf)
-        if isinstance(cert, X509):
-            CertificateChecker.print_cert_info(cert)
+    YDCertFilesChecker(verifier.path_to_ca_certs)
 
 
 
-args = parser.parse_args()
 
-asyncio.run(main())
 
 
 

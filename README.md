@@ -31,7 +31,7 @@ openssl s_client -partial_chain -CApath /path/to/certs -connect httpbin.org:443
 ```
 The code will also throw away hostnames that don't respond to a `Socket.connect()`.
 
-For offline checks - when you have all the trusted and untrusted certificates locally - the `class CertificateChecker` uses `OpenSSL.crypto` from `pyOpenSSL`. This is the equivalent of:
+For offline checks - when you have all the trusted and untrusted certificates locally - the `class LeafVerify` uses `OpenSSL.crypto` from `pyOpenSSL`. This is the equivalent of:
 
 ```
 openssl verify -partial_chain -CApath /path/to/certs httpbin-org-leaf.pem
@@ -77,7 +77,7 @@ The `main.py` file relies on `OpenSSL.SSL` from `pyOpenSSL`.  `pyOpenSSL` is a t
   - The `context` sets `load_verify_locations` to a directory of Certificates.
   - The `context` sets `set_verify(VERIFY_PEER, verify_cb)` to require a certificate and then callback with the `verify` result.
 
-The `class CertificateChecker` relies on `OpenSSL.crypto` from `pyOpenSSL`.
+The `class LeafVerify` relies on `OpenSSL.crypto` from `pyOpenSSL`.
 
 ### Underneath the code
 Don't ignore `c_rehash`.  If you type `man verify` from a terminal it will show an `OpenSSL` help page:
