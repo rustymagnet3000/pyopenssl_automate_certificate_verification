@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-from enum import Enum
+
 import OpenSSL
 from OpenSSL.SSL import Error, WantReadError
 from OpenSSL.crypto import X509, load_certificate, FILETYPE_PEM
@@ -49,7 +49,7 @@ if __name__ == "__main__":
 
                     except OpenSSL.crypto.Error:
                         print("[!]openssl error")
-    print(YDCertFilesChecker.summary)
+    print(YDCertFilesChecker.print_check_summary())
 
 
 
