@@ -1,9 +1,9 @@
 #!/usr/bin/python3
-from OpenSSL.crypto import X509, load_certificate, FILETYPE_PEM, X509Extension
+from OpenSSL.crypto import X509, X509Extension
 from OpenSSL.SSL import SSLEAY_VERSION, SSLeay_version
-from datetime import timedelta, date, datetime
+from datetime import datetime, timedelta
+from time import strptime, strftime, mktime
 from termcolor import colored
-import os
 from operator import eq
 
 
@@ -55,25 +55,26 @@ class YDCertFilesChecker:
         return None
 
     def print_cert_info(self):
-        s = 'commonName: {commonname}, issuer: {issuer} notAfter:  {notafter},\nExpired: {expired}'.format(
+        s = 'commonName: {commonname}, issuer: {issuer}\n\tnotAfter:  {notafter},\n\tExpired: {expired}'.format(
             commonname=self.cert.get_subject().CN,
             issuer=self.cert.get_issuer().CN,
-            notafter=YDCertFilesChecker.pretty_date(self.cert.get_notAfter()),
+            notafter=self.pretty_date(),
             expired=self.cert.has_expired()
         )
         print(s)
 
     def classify_cert_dates(self):
+        temp_time = strptime(self.cert.get_notAfter().decode('ascii'), '%Y%m%d%H%M%SZ')
+        epoch_cert_datetime = datetime.fromtimestamp(mktime(temp_time)).timestamp()
+        delta = timedelta(seconds=3600 * 24 * 60)
+        soon_exp_date = (datetime.now() + delta).timestamp()
+
         if self.cert.has_expired():
             YDCertFilesChecker.summary['expired_certs'] += 1
+        elif soon_exp_date > epoch_cert_datetime:
+            YDCertFilesChecker.summary['expired_60_days'] += 1
 
-        cert_date = (datetime.datetime.strptime(self.cert.get_notAfter().decode('ascii'), '%Y%m%d%H%M%SZ'))
-        delta = timedelta(days=60)
-        soon_exp_date = datetime.datetime.now() + delta
-        if cert_date < soon_exp_date:
-            print(f"Cert expires in 60 days")
-
-    @staticmethod
-    def pretty_date(date_from_cert: bytes):
-        date = (datetime.datetime.strptime(date_from_cert.decode('ascii'), '%Y%m%d%H%M%SZ'))
-        return f"{date:%d-%b-%Y}"
+    def pretty_date(self):
+        temp_time = strptime(self.cert.get_notAfter().decode('ascii'), '%Y%m%d%H%M%SZ')
+        date_str = strftime('%d-%b-%Y', temp_time)
+        return f"{date_str}"

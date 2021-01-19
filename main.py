@@ -16,12 +16,6 @@ import os
 import asn1
 
 
-class CertType(Enum):
-    ROOT_CA = 1
-    INT_CA = 2
-    LEAF = 3
-    UNKNOWN = 4
-
 def summary_print():
     if args.socket_info:
         YDSocket.print_all_connections()
@@ -50,11 +44,9 @@ if __name__ == "__main__":
                     cert_buf = f.read()
                     orig_cert = load_certificate(FILETYPE_PEM, cert_buf)
                     try:
-                        with YDCertFilesChecker(orig_cert) as checker:                         #c.print_cert_info()
-                            cert_type = checker.classify_cert()
+                        with YDCertFilesChecker(orig_cert) as checker:
+                            checker.print_cert_info()
 
-                                # if ext.get_short_name() == b'basicConstraints':
-                                #     print(ext, ext.get_critical(), type(ext))
                     except OpenSSL.crypto.Error:
                         print("[!]openssl error")
     print(YDCertFilesChecker.summary)
