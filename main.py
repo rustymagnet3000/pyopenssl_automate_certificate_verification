@@ -1,6 +1,9 @@
 #!/usr/bin/python3
+from operator import eq
+from enum import Enum
+import OpenSSL
 from OpenSSL.SSL import Error, WantReadError
-from OpenSSL.crypto import X509, load_certificate, FILETYPE_PEM
+from OpenSSL.crypto import X509, load_certificate, FILETYPE_PEM, X509Extension
 from socket import gaierror, timeout
 from support.YDCertFilesChecker import YDCertFilesChecker
 from support.YDSocket import YDSocket
@@ -11,6 +14,13 @@ from support.HostNameClean import HostNameCleaner
 from support.CertCheck import LeafVerify
 import os
 import asn1
+
+
+class CertType(Enum):
+    ROOT_CA = 1
+    INT_CA = 2
+    LEAF = 3
+    UNKNOWN = 4
 
 def summary_print():
     if args.socket_info:
@@ -26,6 +36,27 @@ def summary_print():
         YDSocket.print_all_connections()
 
 
+def attest_whether_ca(cert):
+    '''
+    test basic certificate assumptions for a host certificate
+    Has to work against Certs without Extensions
+    Args: cert (crypto.X509): Cert to get Extensions
+    '''
+    # dictionary of X509Extension short name and data
+
+    cert_ext = {ext.get_short_name(): ext.get_data() for ext in [cert.get_extension(i) for i in range(cert.get_extension_count())]}
+    basic_context = X509Extension(b'basicConstraints', True, b'CA:TRUE')
+
+    if cert.get_issuer().CN == cert.get_subject().CN and b'basicConstraints' in cert_ext and eq(cert_ext[b'basicConstraints'], basic_context.get_data()):
+        return CertType.ROOT_CA
+    elif b'basicConstraints' in cert_ext and eq(cert_ext[b'basicConstraints'], basic_context.get_data()):
+        return CertType.INT_CA
+    elif b'subjectAltName' in cert_ext:
+        return CertType.LEAF
+    else:
+        return CertType.UNKNOWN
+
+
 if __name__ == "__main__":
     args = parser.parse_args()
     verifier = Verifier(ca_dir=args.certs_path, c_rehash_loc=args.rehash_path)
@@ -33,20 +64,19 @@ if __name__ == "__main__":
     decoder = asn1.Decoder()
     for file in os.listdir(verifier.path_to_ca_certs):
         if file.endswith('crt') or file.endswith('.pem') or file.endswith('.der'):
-            with open(os.path.join(verifier.path_to_ca_certs, file), "r") as f:
-                cert_buf = f.read()
-                cert = load_certificate(FILETYPE_PEM, cert_buf)
-                with YDCertFilesChecker(cert) as c:
-                    #c.print_cert_info()
-                    for index in range(c.cert.get_extension_count()):
-                        ext = cert.get_extension(index)
-                        print(ext.get_short_name())
-                        decoder.start(ext.get_data())
-                        tag, value = decoder.read()
-                        print(tag, type(value))
+                with open(os.path.join(verifier.path_to_ca_certs, file), "r") as f:
+                    cert_buf = f.read()
+                    orig_cert = load_certificate(FILETYPE_PEM, cert_buf)
+                    try:
+                        with YDCertFilesChecker(orig_cert) as checker:                         #c.print_cert_info()
+                            cert_type = attest_whether_ca(checker.cert)
+                            print(cert_type, checker.cert.get_subject().CN)
+
+                                # if ext.get_short_name() == b'basicConstraints':
+                                #     print(ext, ext.get_critical(), type(ext))
+                    except OpenSSL.crypto.Error:
+                        print("[!]openssl error")
     print(YDCertFilesChecker.summary)
-
-
 
 
 
