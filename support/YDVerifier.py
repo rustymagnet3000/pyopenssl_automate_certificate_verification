@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 import subprocess
-from os import listdir
-from os.path import isdir, exists
+from os import listdir, remove
+from os.path import isdir, exists, join
 from OpenSSL.SSL import (
     TLSv1_2_METHOD,
     OP_NO_SSLv2,
@@ -19,34 +19,38 @@ class Verifier:
 
     def __init__(self, ca_dir, c_rehash_loc):
         self.cert_hash_count = 0
-        self.path_to_ca_certs = Verifier.verify_ca_dir_and_files(ca_dir)
-        self.path_to_c_rehash = Verifier.check_c_rehash_exists(c_rehash_loc)
-        if self.path_to_ca_certs is None or self.path_to_c_rehash is None:
-            return
+        self.path_to_ca_certs = ca_dir
+        self.path_to_c_rehash = c_rehash_loc
         self.verify_flags = 0x80000  # partial Chain allowed
         self.context = self.set_context()
+
+    def __enter__(self):
+        self.verify_ca_dir_and_files()
+        self.check_c_rehash_exists()
         self.run_c_rehash()
+        return self
 
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        for file in listdir(self.path_to_ca_certs):
+            if file.endswith('.0') or file.endswith('.1'):
+                remove(join(self.path_to_ca_certs, file))
+        print("[!] clean-up.  Deleted all symbolic links.")
 
-    @staticmethod
-    def check_c_rehash_exists(c_rehash_location):
+    def check_c_rehash_exists(self):
         """
             OpenSSL ships /bin/c_rehash.  Function to check it exists locally
         """
-        if not exists(c_rehash_location):
-            print('[!]Cannot find c_rehash at:\t{0}'.format(c_rehash_location))
-            return None
-        return c_rehash_location
+        if not exists(self.path_to_c_rehash):
+            print('[!]Cannot find c_rehash at:\t{0}'.format(self.path_to_c_rehash))
+            self.path_to_c_rehash = ''
 
-    @staticmethod
-    def verify_ca_dir_and_files(ca_dir):
+    def verify_ca_dir_and_files(self):
         """
             Check CA directory exists. Input is a str ( not a Path ).
         """
-        if not exists(ca_dir) and not isdir(ca_dir):
-            print('[!]CA Directory of certificates not found:\t{0}'.format(ca_dir))
-            return None
-        return ca_dir
+        if not exists(self.path_to_ca_certs) and not isdir(self.path_to_ca_certs):
+            print('[!]CA Directory of certificates not found:\t{0}'.format(self.path_to_ca_certs))
+            self.path_to_ca_certs = ''
 
     def run_c_rehash(self):
         """

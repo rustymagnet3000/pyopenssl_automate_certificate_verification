@@ -8,11 +8,10 @@ from support.YDCertFilesChecker import YDCertFilesChecker
 from support.YDSocket import YDSocket
 from support.YDTLSClient import YDTLSClient
 from support.argparsing import parser
-from support.Verifier import Verifier
+from support.YDVerifier import Verifier
 from support.HostNameClean import HostNameCleaner
 from support.CertCheck import LeafVerify
 import os
-
 
 
 def summary_print():
@@ -32,24 +31,29 @@ def summary_print():
 if __name__ == "__main__":
     args = parser.parse_args()
     with Verifier(ca_dir=args.certs_path, c_rehash_loc=args.rehash_path) as verifier:
-        for file in os.listdir(verifier.path_to_ca_certs):
-            if file.endswith('crt') or file.endswith('.pem') or file.endswith('.der'):
-                    with open(os.path.join(verifier.path_to_ca_certs, file), "r") as f:
+        for filename in os.listdir(verifier.path_to_ca_certs):
+            if filename.endswith('crt') or filename.endswith('.pem') or filename.endswith('.der'):
+                try:
+                    with open(os.path.join(verifier.path_to_ca_certs, filename), "r") as f:
                         cert_buf = f.read()
                         orig_cert = load_certificate(FILETYPE_PEM, cert_buf)
                         try:
-                            with YDCertFilesChecker(orig_cert) as checker:
+                            with YDCertFilesChecker(orig_cert, filename) as checker:
                                 YDCertFilesChecker.table.add_row(
-                                    [checker.cert.get_subject().CN, checker.cert.get_issuer().CN,
-                                     checker.classify_cert(), YDCertFilesChecker.pretty_date(checker.cert)])
+                                    [checker.cert.get_subject().CN,
+                                     checker.cert.get_issuer().CN,
+                                     checker.classify_cert().value,
+                                     checker.filename,
+                                     YDCertFilesChecker.pretty_date(checker.cert)])
                         except OpenSSL.crypto.Error:
                             print("[!]openssl error")
+                except OpenSSL.crypto.Error:
+                    print("Error happened in Load Certificate call:", filename)
         print("\n" + YDCertFilesChecker.table.draw() + "\n")
-        print(YDCertFilesChecker.print_check_summary())
+        YDCertFilesChecker.print_check_summary()
 
 
 
-#
 # with args.hostnames_file as file:
 #     sanitized_hosts = HostNameCleaner(file)
 # hosts = sanitized_hosts.hostnames

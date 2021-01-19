@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-from support.Verifier import Verifier
+from support.YDVerifier import Verifier
 from support.CertChainLList import SinglyLinkedList
 from OpenSSL.SSL import Connection
 import time

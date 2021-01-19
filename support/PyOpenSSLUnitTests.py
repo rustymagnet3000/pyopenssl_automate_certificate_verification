@@ -3,7 +3,7 @@ import unittest
 from socket import socket
 import time
 from OpenSSL.SSL import Connection
-from support.Verifier import Verifier
+from support.YDVerifier import Verifier
 from support.CertCheck import LeafVerify
 from support.test_certs import (
     int_ca_cert_pem,

@@ -9,16 +9,16 @@ from enum import Enum
 
 
 class CertType(Enum):
-    ROOT_CA = 1
-    INT_CA = 2
-    LEAF = 3
-    UNKNOWN = 4
+    ROOT_CA = "root CA"
+    INT_CA = "intermediate CA"
+    LEAF = "Leaf cert"
+    UNKNOWN = "Unknown"
 
 
 class YDCertFilesChecker:
-    table = Texttable(max_width=170)
-    table.set_cols_width([65, 65, 20, 20])
-    table.header(['Subject Name', 'Issuer', 'Type', 'Expiry'])
+    table = Texttable(max_width=200)
+    table.set_cols_width([65, 65, 20, 40, 20])
+    table.header(['Subject Name', 'Issuer', 'Type', 'Filename', 'Expiry'])
     table.set_deco(table.BORDER | Texttable.HEADER | Texttable.VLINES | Texttable.HLINES)
     expired_certs = []
     expiring_certs = []
@@ -30,7 +30,8 @@ class YDCertFilesChecker:
         "openssl_version": str(SSLeay_version(SSLEAY_VERSION), 'utf-8')
     }
 
-    def __init__(self, cert: X509):
+    def __init__(self, cert: X509, filename: str):
+        self.filename = filename
         assert isinstance(cert, X509)
         self.cert = cert
 
@@ -70,6 +71,7 @@ class YDCertFilesChecker:
     def __exit__(self, exc_type, exc_val, exc_tb):
         return None
 
+    @staticmethod
     def print_check_summary():
         table = Texttable(max_width=100)
         table.set_cols_width([70, 20])
@@ -94,15 +96,6 @@ class YDCertFilesChecker:
             YDCertFilesChecker.expired_certs.append(self.cert)
         elif soon_exp_date > epoch_cert_datetime:
             YDCertFilesChecker.expiring_certs.append(self.cert)
-
-    def print_cert_info(self):
-        s = 'commonName: {commonname}, issuer: {issuer}\n\tnotAfter:  {notafter},\n\tExpired: {expired}'.format(
-            commonname=self.cert.get_subject().CN,
-            issuer=self.cert.get_issuer().CN,
-            notafter=YDCertFilesChecker.pretty_date(self.cert),
-            expired=self.cert.has_expired()
-        )
-        print(s)
 
     @staticmethod
     def pretty_date(cert):
