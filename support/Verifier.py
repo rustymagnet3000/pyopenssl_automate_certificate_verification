@@ -27,6 +27,7 @@ class Verifier:
         self.context = self.set_context()
         self.run_c_rehash()
 
+
     @staticmethod
     def check_c_rehash_exists(c_rehash_location):
         """

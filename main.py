@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 
-
 import OpenSSL
 from OpenSSL.SSL import Error, WantReadError
 from OpenSSL.crypto import X509, load_certificate, FILETYPE_PEM
@@ -13,7 +12,7 @@ from support.Verifier import Verifier
 from support.HostNameClean import HostNameCleaner
 from support.CertCheck import LeafVerify
 import os
-import asn1
+
 
 
 def summary_print():
@@ -30,26 +29,23 @@ def summary_print():
         YDSocket.print_all_connections()
 
 
-
-
-
 if __name__ == "__main__":
     args = parser.parse_args()
-    verifier = Verifier(ca_dir=args.certs_path, c_rehash_loc=args.rehash_path)
-    assert (verifier.cert_hash_count > 0)
-    decoder = asn1.Decoder()
-    for file in os.listdir(verifier.path_to_ca_certs):
-        if file.endswith('crt') or file.endswith('.pem') or file.endswith('.der'):
-                with open(os.path.join(verifier.path_to_ca_certs, file), "r") as f:
-                    cert_buf = f.read()
-                    orig_cert = load_certificate(FILETYPE_PEM, cert_buf)
-                    try:
-                        with YDCertFilesChecker(orig_cert) as checker:
-                            checker.print_cert_info()
-
-                    except OpenSSL.crypto.Error:
-                        print("[!]openssl error")
-    print(YDCertFilesChecker.print_check_summary())
+    with Verifier(ca_dir=args.certs_path, c_rehash_loc=args.rehash_path) as verifier:
+        for file in os.listdir(verifier.path_to_ca_certs):
+            if file.endswith('crt') or file.endswith('.pem') or file.endswith('.der'):
+                    with open(os.path.join(verifier.path_to_ca_certs, file), "r") as f:
+                        cert_buf = f.read()
+                        orig_cert = load_certificate(FILETYPE_PEM, cert_buf)
+                        try:
+                            with YDCertFilesChecker(orig_cert) as checker:
+                                YDCertFilesChecker.table.add_row(
+                                    [checker.cert.get_subject().CN, checker.cert.get_issuer().CN,
+                                     checker.classify_cert(), YDCertFilesChecker.pretty_date(checker.cert)])
+                        except OpenSSL.crypto.Error:
+                            print("[!]openssl error")
+        print("\n" + YDCertFilesChecker.table.draw() + "\n")
+        print(YDCertFilesChecker.print_check_summary())
 
 
 

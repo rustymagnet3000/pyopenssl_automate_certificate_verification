@@ -16,8 +16,8 @@ class CertType(Enum):
 
 
 class YDCertFilesChecker:
-    table = Texttable(max_width=160)
-    table.set_cols_width([70, 70, 20])
+    table = Texttable(max_width=170)
+    table.set_cols_width([65, 65, 20, 20])
     table.header(['Subject Name', 'Issuer', 'Type', 'Expiry'])
     table.set_deco(table.BORDER | Texttable.HEADER | Texttable.VLINES | Texttable.HLINES)
     expired_certs = []
@@ -35,9 +35,7 @@ class YDCertFilesChecker:
         self.cert = cert
 
     def __enter__(self):
-        YDCertFilesChecker.table.add_row([self.cert.get_subject().CN, YDCertFilesChecker.pretty_date(self.cert), self.classify_cert()])
         self.classify_cert_dates()
-
         return self
 
     def classify_cert(self):
@@ -46,7 +44,7 @@ class YDCertFilesChecker:
         A lot of the values are optional, so check has to account for missing keys / None.
         cert_ext == dictionary of X509Extension short name and data.
         Parameters: cert (crypto.X509)
-        Returns: None
+        Returns: CertType
         """
         cert_ext = {ext.get_short_name(): ext.get_data() for ext in
                     [self.cert.get_extension(i) for i in range(self.cert.get_extension_count())]}
@@ -54,15 +52,20 @@ class YDCertFilesChecker:
         definite_int_ca = X509Extension(b"basicConstraints", True, b"CA:TRUE, pathlen:1")
 
         if self.cert.get_issuer().CN == self.cert.get_subject().CN:
-            YDCertFilesChecker.summary['root_certs'] += 1 and Return
+            YDCertFilesChecker.summary['root_certs'] += 1
+            return CertType.ROOT_CA
         elif b'basicConstraints' in cert_ext and eq(cert_ext[b'basicConstraints'], possible_int_ca.get_data()):
             YDCertFilesChecker.summary['int_certs'] += 1
+            return CertType.INT_CA
         elif b'basicConstraints' in cert_ext and eq(cert_ext[b'basicConstraints'], definite_int_ca.get_data()):
             YDCertFilesChecker.summary['int_certs'] += 1
+            return CertType.INT_CA
         elif b'subjectAltName' in cert_ext:
             YDCertFilesChecker.summary['leaf_certs'] += 1
+            return CertType.LEAF
         else:
             YDCertFilesChecker.summary['unknown_certs'] += 1
+            return CertType.UNKNOWN
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         return None
