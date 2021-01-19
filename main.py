@@ -1,9 +1,9 @@
 #!/usr/bin/python3
-from operator import eq
+
 from enum import Enum
 import OpenSSL
 from OpenSSL.SSL import Error, WantReadError
-from OpenSSL.crypto import X509, load_certificate, FILETYPE_PEM, X509Extension
+from OpenSSL.crypto import X509, load_certificate, FILETYPE_PEM
 from socket import gaierror, timeout
 from support.YDCertFilesChecker import YDCertFilesChecker
 from support.YDSocket import YDSocket
@@ -36,25 +36,7 @@ def summary_print():
         YDSocket.print_all_connections()
 
 
-def attest_whether_ca(cert):
-    '''
-    test basic certificate assumptions for a host certificate
-    Has to work against Certs without Extensions
-    Args: cert (crypto.X509): Cert to get Extensions
-    '''
-    # dictionary of X509Extension short name and data
 
-    cert_ext = {ext.get_short_name(): ext.get_data() for ext in [cert.get_extension(i) for i in range(cert.get_extension_count())]}
-    basic_context = X509Extension(b'basicConstraints', True, b'CA:TRUE')
-
-    if cert.get_issuer().CN == cert.get_subject().CN and b'basicConstraints' in cert_ext and eq(cert_ext[b'basicConstraints'], basic_context.get_data()):
-        return CertType.ROOT_CA
-    elif b'basicConstraints' in cert_ext and eq(cert_ext[b'basicConstraints'], basic_context.get_data()):
-        return CertType.INT_CA
-    elif b'subjectAltName' in cert_ext:
-        return CertType.LEAF
-    else:
-        return CertType.UNKNOWN
 
 
 if __name__ == "__main__":
@@ -69,8 +51,7 @@ if __name__ == "__main__":
                     orig_cert = load_certificate(FILETYPE_PEM, cert_buf)
                     try:
                         with YDCertFilesChecker(orig_cert) as checker:                         #c.print_cert_info()
-                            cert_type = attest_whether_ca(checker.cert)
-                            print(cert_type, checker.cert.get_subject().CN)
+                            cert_type = checker.classify_cert()
 
                                 # if ext.get_short_name() == b'basicConstraints':
                                 #     print(ext, ext.get_critical(), type(ext))
