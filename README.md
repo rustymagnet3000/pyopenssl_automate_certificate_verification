@@ -1,18 +1,49 @@
 # PyOpenSSL playground
-### Setup
-`pip3 install -r requirements.txt`
 
-This repo uses `pyOpenSSL`.  If you used `OpenSSL` to do the following, this repo offers a tiny subset of that functionality.
+The repo solely relies on `OpenSSL.SSL` from `pyOpenSSL`.  `pyOpenSSL` is a thin wrapper on top of the `C OpenSSL library`.  
+
+If you used the following `OpenSSL` commands, this repo might be useful:
 ```
 openssl s_client -partial_chain -CApath /path/to/certs -connect httpbin.org:443
 
 openssl verify -partial_chain -CApath /path/to/certs httpbin-org-leaf.pem
 ```
-It was written to:
-
+### Setup
+`pip3 install -r requirements.txt`
 ### Output
+##### Print information about Trust Store OpenSSL will use
 ```
-[*]PyOpenSSL:20.0.0	
+python3 main.py -p
+
+[*]PyOpenSSL:20.0.0
+[*]Creating symbolic links for OpenSSL
+[*]Certificates in Trust Store :4
+
++----------------------------------------------------+----------------------------------------------------+----------------------+------------------------------------------+----------------------+
+|                    Subject Name                    |                       Issuer                       |         Type         |                 Filename                 |        Expiry        |
++====================================================+====================================================+======================+==========================================+======================+
+| Let's Encrypt Authority X3                         | DST Root CA X3                                     | Unknown              | so_int_ca.pem                            | 17-Mar-2021          |
++----------------------------------------------------+----------------------------------------------------+----------------------+------------------------------------------+----------------------+
+| Amazon                                             | Amazon Root CA 1                                   | Unknown              | httpbin-org-IntCA.pem                    | 21-Oct-2040          |
++----------------------------------------------------+----------------------------------------------------+----------------------+------------------------------------------+----------------------+
+| DigiCert SHA2 High Assurance Server CA             | DigiCert High Assurance EV Root CA                 | Unknown              | github_int_ca.pem                        | 22-Oct-2028          |
++----------------------------------------------------+----------------------------------------------------+----------------------+------------------------------------------+----------------------+
+| GTS CA 1O1                                         | GlobalSign                                         | Unknown              | google_int_ca.pem                        | 15-Dec-2021          |
++----------------------------------------------------+----------------------------------------------------+----------------------+------------------------------------------+----------------------+
+
++------------------------------------------------------------------------+----------------------+
+|                         Expired/Expiring Cert                          |     Expiry Date      |
++========================================================================+======================+
+| Let's Encrypt Authority X3                                             | 17-Mar-2021          |
++------------------------------------------------------------------------+----------------------+
+
+[*]clean-up.  Deleted all symbolic links.
+```
+### Output
+##### Verify hostnames and certificate chains
+```
+python3 main.py -f hostnames.txt            # use default Certificate folder ( /support/ca_files )
+
 [*]OpenSSL 1.1.1h  22 Sep 2020
 [*]Creating symbolic links for OpenSSL
 [*]Certificates in Trust Store :4
@@ -41,48 +72,11 @@ It was written to:
 
 ```
 
-``````
-+-------------------------------------------------------------------+-------------------------------------------------------------------+----------------------+------------------------------------------+----------------------+
-|                           Subject Name                            |                              Issuer                               |         Type         |                 Filename                 |        Expiry        |
-+===================================================================+===================================================================+======================+==========================================+======================+
-| Let's Encrypt Authority X3                                        | DST Root CA X3                                                    | Unknown              | so_int_ca.pem                            | 17-Mar-2021          |
-+-------------------------------------------------------------------+-------------------------------------------------------------------+----------------------+------------------------------------------+----------------------+
-| Amazon                                                            | Amazon Root CA 1                                                  | Unknown              | httpbin-org-IntCA.pem                    | 21-Oct-2040          |
-+-------------------------------------------------------------------+-------------------------------------------------------------------+----------------------+------------------------------------------+----------------------+
-| DigiCert SHA2 High Assurance Server CA                            | DigiCert High Assurance EV Root CA                                | Unknown              | github_int_ca.pem                        | 22-Oct-2028          |
-+-------------------------------------------------------------------+-------------------------------------------------------------------+----------------------+------------------------------------------+----------------------+
-| GTS CA 1O1                                                        | GlobalSign                                                        | Unknown              | google_int_ca.pem                        | 15-Dec-2021          |
-+-------------------------------------------------------------------+-------------------------------------------------------------------+----------------------+------------------------------------------+----------------------+
-
-{
-    "int_certs": 0,
-    "leaf_certs": 0,
-    "openssl_version": "OpenSSL 1.1.1h  22 Sep 2020",
-    "root_certs": 0,
-    "unknown_certs": 8
-}
-
-+------------------------------------------------------------------------+----------------------+
-|                              Expired Cert                              |     Expiry Date      |
-+========================================================================+======================+
-| Let's Encrypt Authority X3                                             | 17-Mar-2021          |
-| Let's Encrypt Authority X3                                             | 17-Mar-2021          |
-+------------------------------------------------------------------------+----------------------+
-```
-The code throws away hostnames that don't respond to a `socket.getaddr()` or `socket.connect()`.
-
-For offline checks - when you have all the trusted and untrusted certificates locally - the `class LeafVerify` uses `OpenSSL.crypto` from `pyOpenSSL`. This is the equivalent of:
-
 ### Usage
 ```
 usage: main.py [-h] [--hostnames-file HOSTNAMES_FILE] -c CERTS_PATH [-r REHASH_PATH] [-p PRINT_TRUSTSTORE_INFO] [-s]
                [-t] [-all]
                
-python3 main.py -f hostnames.txt                                                # use default Certificate folder ( /support/ca_files )
-python3 main.py -f hostnames.txt -c /ca_certs/ -r ~/openssl/bin/c_rehash        # specify location of certificates and c_rehash
-python3 main.py -p hostnames.txt -c /ca_certs/ -p                               # prints Certification information inside CA folder location 
-
-
 PyOpenSSL
 
 optional arguments:
@@ -104,18 +98,22 @@ optional arguments:
 
 
 ### Design choices
-The `main.py` file relies on `OpenSSL.SSL` from `pyOpenSSL`.  `pyOpenSSL` is a thin wrapper on top of the `C` based `OpenSSL`.  `pyOpenSSL` is a good way to get familiar with the `C OpenSSL APIs`, `Structs` and `Flags`.  
 
-###### The notable components:
+`pyOpenSSL` is a good way to get familiar with the `C OpenSSL APIs`, `Structs` and `Flags`.  This repo does NOT use `Python's` more commonly used libraries `ssl` or `cryptography`.
+
+###### The notable decisions:
   - Opens a `Socket` to a server.
+  - The code will report errors if a hostname fails `socket.getaddr` or `socket.connect()`.
   - `context = Context(TLSv1_2_METHOD)` create an object instance used for setting up new SSL connections.
+  - `TLSv1_2_METHOD` is chosen because `TLSv1_3_METHOD` is not available in `pyOpenSSL`.
   - The `context` sets `load_verify_locations` to a directory of Certificates.
   - The `context` sets `set_verify(VERIFY_PEER, verify_cb)` to require a certificate and then callback with the `verify` result.
+ - `Python Context Managers` are used to kick-off the `c_rehash` tool and clean-up the `symbolic links` it generated.
 
 The `class LeafVerify` relies on `OpenSSL.crypto` from `pyOpenSSL`.
 
 ### Underneath the code
-Don't ignore `c_rehash`.  If you type `man verify` from a terminal it will show an `OpenSSL` help page:
+Don't ignore the `openSSL` tool called: `c_rehash`.  If you type `man verify` from a terminal it will show an `OpenSSL` help page:
 
 > -CApath directory
 >     A directory of trusted certificates. The certificates should have names of
@@ -124,14 +122,17 @@ Don't ignore `c_rehash`.  If you type `man verify` from a terminal it will show 
 >     Under Unix the c_rehash script will automatically create symbolic links to a
 >     directory of certificates.
 
-The code in this repo assumes you have a directory of Certificates - that represents your `Trust Store` - and you have the `c_rehash`tool installed:
+The `c_rehash` tool does that work for you:
+> rehash scans directories and calculates a hash value of each ".pem", ".crt", ".cer", or ".crl" file in the specified directory list and creates symbolic links for each file
+
+
+The code in this repo assumes you have a directory of Certificates.  These certificates represent your `Trust Store` - and you have the `c_rehash`tool installed:
 ```
 class Verifier:
     def __init__(self, ca_dir=Path(getcwd() + '/support/ca_files'),
                  c_rehash_loc=environ['HOME'] + '/openssl/bin/c_rehash'):
 ```              
 
-> rehash scans directories and calculates a hash value of each ".pem", ".crt", ".cer", or ".crl" file in the specified directory list and creates symbolic links for each file
 
 If you don't have the `symbolic links` the `verify step` will fail.
 

@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 from OpenSSL.crypto import X509, X509Extension
-from OpenSSL.SSL import SSLEAY_VERSION, SSLeay_version
 from datetime import datetime, timedelta
 from time import strptime, strftime, mktime
 from texttable import Texttable
@@ -32,7 +31,22 @@ class YDCertFilesChecker:
         assert isinstance(cert, X509)
         self.cert = cert
 
-    def classify_cert(self):
+    def add_cert_to_summary_table(self):
+        """
+        Adds details of the Cert to a TextTable
+        :return: None
+        """
+        YDCertFilesChecker.each_cert_summary_info.append([
+            self.cert.get_subject().CN,
+            self.cert.get_issuer().CN,
+            self._classify_cert().value,
+            self.filename,
+            YDCertFilesChecker.pretty_date(self.cert)]
+        )
+        self._check_if_cert_expired()
+        return None
+
+    def _classify_cert(self):
         """
         Classifies certificate against Root, Int CA or Leaf.
         A lot of the values are optional, so check has to account for missing keys / None.
@@ -40,8 +54,6 @@ class YDCertFilesChecker:
         Parameters: cert (crypto.X509)
         Returns: CertType
         """
-
-        self.check_if_cert_expired()
         cert_ext = {ext.get_short_name(): ext.get_data() for ext in
                     [self.cert.get_extension(i) for i in range(self.cert.get_extension_count())]}
         possible_int_ca = X509Extension(b'basicConstraints', True, b'CA:TRUE')
@@ -63,7 +75,7 @@ class YDCertFilesChecker:
             YDCertFilesChecker.summary['unknown_certs'] += 1
             return CertType.UNKNOWN
 
-    def check_if_cert_expired(self):
+    def _check_if_cert_expired(self):
         """
         Takes the current Cert: x509 and:
         Expired cert -> Uses the .has_expired() attribute.
@@ -80,20 +92,6 @@ class YDCertFilesChecker:
         elif soon_exp_date > epoch_cert_datetime:
             YDCertFilesChecker.expiring_certs.append(self.cert)
 
-    def add_cert_to_summary_table(self):
-        """
-        Adds details of the Cert to a TextTable
-        :return: None
-        """
-        YDCertFilesChecker.each_cert_summary_info.append([
-            self.cert.get_subject().CN,
-            self.cert.get_issuer().CN,
-            self.classify_cert().value,
-            self.filename,
-            YDCertFilesChecker.pretty_date(self.cert)]
-        )
-        return None
-
     @staticmethod
     def print_cert_files_summary():
         """
@@ -101,7 +99,7 @@ class YDCertFilesChecker:
         :return: None
         """
         table = Texttable(max_width=200)
-        table.set_cols_width([65, 65, 20, 40, 20])
+        table.set_cols_width([50, 50, 20, 40, 20])
         table.header(['Subject Name', 'Issuer', 'Type', 'Filename', 'Expiry'])
         table.set_deco(table.BORDER | Texttable.HEADER | Texttable.VLINES | Texttable.HLINES)
 
@@ -116,7 +114,7 @@ class YDCertFilesChecker:
             table.set_cols_width([70, 20])
             table.set_deco(table.BORDER | Texttable.HEADER | Texttable.VLINES)
 
-            table.header(['Expired Cert', 'Expiry Date'])
+            table.header(['Expired/Expiring Cert', 'Expiry Date'])
             for cert in YDCertFilesChecker.expired_certs:
                 table.add_row([cert.get_subject().CN, YDCertFilesChecker.pretty_date(cert)])
 
