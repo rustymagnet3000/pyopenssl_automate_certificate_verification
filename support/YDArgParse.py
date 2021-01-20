@@ -11,6 +11,13 @@ parser.add_argument(
     required=True)
 
 parser.add_argument(
+    "-c",
+    "--certs-path",
+    help='Path to directory of Root and Intermediate Cert Authority certificates',
+    default=getcwd() + '/support/ca_files',
+    required=True)
+
+parser.add_argument(
     "-r",
     "--rehash-path",
     help='Path to OpenSSL\'s c_rehash tool. This generates the symbolic required for OpenSSL\'s Verify() to work'
@@ -19,9 +26,10 @@ parser.add_argument(
     required=False)
 
 parser.add_argument(
-    "-c",
-    "--certs-path",
-    help='Path to directory of Root and Intermediate Cert Authority certificates',
+    "-p",
+    "--print-truststore-info",
+    help='Prints out information about the directory of Root and Intermediate Cert Authority certificates. '
+         'This is the Truststore.',
     default=getcwd() + '/support/ca_files',
     required=False)
 

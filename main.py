@@ -7,7 +7,7 @@ from socket import gaierror, timeout
 from support.YDCertFilesChecker import YDCertFilesChecker
 from support.YDSocket import YDSocket
 from support.YDTLSClient import YDTLSClient
-from support.argparsing import parser
+from support.YDArgParse import parser
 from support.YDVerifier import Verifier
 from support.HostNameClean import HostNameCleaner
 from support.CertCheck import LeafVerify
@@ -37,20 +37,16 @@ if __name__ == "__main__":
                     with open(os.path.join(verifier.path_to_ca_certs, filename), "r") as f:
                         cert_buf = f.read()
                         orig_cert = load_certificate(FILETYPE_PEM, cert_buf)
-                        try:
-                            with YDCertFilesChecker(orig_cert, filename) as checker:
-                                YDCertFilesChecker.table.add_row(
-                                    [checker.cert.get_subject().CN,
-                                     checker.cert.get_issuer().CN,
-                                     checker.classify_cert().value,
-                                     checker.filename,
-                                     YDCertFilesChecker.pretty_date(checker.cert)])
+                        checker = YDCertFilesChecker(orig_cert, filename)
+                        checker.classify_cert()
+                        checker.add_cert_to_summary_table()
                         except OpenSSL.crypto.Error:
                             print("[!]openssl error")
                 except OpenSSL.crypto.Error:
                     print("Error happened in Load Certificate call:", filename)
         print("\n" + YDCertFilesChecker.table.draw() + "\n")
-        YDCertFilesChecker.print_check_summary()
+        YDCertFilesChecker.print_expired_cert_summary()
+
 
 
 

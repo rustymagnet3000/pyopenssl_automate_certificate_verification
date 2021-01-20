@@ -34,7 +34,7 @@ class Verifier:
         for file in listdir(self.path_to_ca_certs):
             if file.endswith('.0') or file.endswith('.1'):
                 remove(join(self.path_to_ca_certs, file))
-        print("[!] clean-up.  Deleted all symbolic links.")
+        print("[*]clean-up.  Deleted all symbolic links.")
 
     def check_c_rehash_exists(self):
         """
