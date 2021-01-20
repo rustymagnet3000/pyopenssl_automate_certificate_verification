@@ -6,6 +6,7 @@ from time import strptime, strftime, mktime
 from texttable import Texttable
 from operator import eq
 from enum import Enum
+import json
 
 
 class CertType(Enum):
@@ -16,18 +17,14 @@ class CertType(Enum):
 
 
 class YDCertFilesChecker:
-    table = Texttable(max_width=200)
-    table.set_cols_width([65, 65, 20, 40, 20])
-    table.header(['Subject Name', 'Issuer', 'Type', 'Filename', 'Expiry'])
-    table.set_deco(table.BORDER | Texttable.HEADER | Texttable.VLINES | Texttable.HLINES)
     expired_certs = []
     expiring_certs = []
+    each_cert_summary_info = []
     summary = {
         "root_certs": 0,
         "int_certs": 0,
         "leaf_certs": 0,
-        "unknown_certs": 0,
-        "openssl_version": str(SSLeay_version(SSLEAY_VERSION), 'utf-8')
+        "unknown_certs": 0
     }
 
     def __init__(self, cert: X509, filename: str):
@@ -88,20 +85,32 @@ class YDCertFilesChecker:
         Adds details of the Cert to a TextTable
         :return: None
         """
-        YDCertFilesChecker.table.add_row(
-            [self.cert.get_subject().CN,
-             self.cert.get_issuer().CN,
-             self.classify_cert().value,
-             self.filename,
-             YDCertFilesChecker.pretty_date(self.cert)])
+        YDCertFilesChecker.each_cert_summary_info.append([
+            self.cert.get_subject().CN,
+            self.cert.get_issuer().CN,
+            self.classify_cert().value,
+            self.filename,
+            YDCertFilesChecker.pretty_date(self.cert)]
+        )
         return None
 
     @staticmethod
-    def print_expired_cert_summary():
+    def print_cert_files_summary():
         """
-        Print the Expired/Expiring certs
+        First, prints all the Certs in a TextTable.  Then print the Expired/Expiring cert information.
         :return: None
         """
+        table = Texttable(max_width=200)
+        table.set_cols_width([65, 65, 20, 40, 20])
+        table.header(['Subject Name', 'Issuer', 'Type', 'Filename', 'Expiry'])
+        table.set_deco(table.BORDER | Texttable.HEADER | Texttable.VLINES | Texttable.HLINES)
+
+        for i in YDCertFilesChecker.each_cert_summary_info:
+            table.add_row(i)
+
+        print("\n" + table.draw() + "\n")
+
+        print(json.dumps(YDCertFilesChecker.summary, indent=4, sort_keys=True))
         if len(YDCertFilesChecker.expired_certs) > 0 or len(YDCertFilesChecker.expiring_certs) > 0:
             table = Texttable(max_width=100)
             table.set_cols_width([70, 20])

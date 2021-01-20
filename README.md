@@ -1,41 +1,14 @@
 # PyOpenSSL playground
 ### Setup
 `pip3 install -r requirements.txt`
-### Usage
-```
-usage: main.py [-h] --hostnames-file HOSTNAMES_FILE [-r REHASH_PATH] [-c CERTS_PATH] [-s] [-t] [-all]
 
-python3 main.py -f hostnames.txt                                                # use default locations
-python3 main.py -f hostnames.txt -c /ca_certs/ -r ~/openssl/bin/c_rehash        # specify locations for CA certs and c_rehash
-
-optional arguments:
-  -h, --help            show this help message and exit
-  --hostnames-file      Path to text file that includes hostnames to check
-  -r REHASH_PATH, --rehash-path REHASH_PATH
-                        Path to OpenSSL's c_rehash tool. This generates the symbolic required for OpenSSL's Verify() to
-                        workIf you don't include this value, it will default to ~/openssl/bin
-  -c CERTS_PATH, --certs-path CERTS_PATH
-                        Path to directory of Root and Intermediate Cert Authority certificates
-  -s, --socket-info     Prints the I.P. address returned from from getaddrinfo()
-  -t, --time            Prints the time for tls_client.do_handshake() to complete
-  -all, --all           Prints all information available
-```
-### Background
-This repo uses `pyOpenSSL`.  
-
-The `main.py` script relies on `OpenSSL.SSL` from `pyOpenSSL`.  
-
-This is akin to:
+This repo uses `pyOpenSSL`.  If you used `OpenSSL` to do the following, this repo offers a tiny subset of that functionality.
 ```
 openssl s_client -partial_chain -CApath /path/to/certs -connect httpbin.org:443
-```
-The code will also throw away hostnames that don't respond to a `Socket.connect()`.
 
-For offline checks - when you have all the trusted and untrusted certificates locally - the `class LeafVerify` uses `OpenSSL.crypto` from `pyOpenSSL`. This is the equivalent of:
-
-```
 openssl verify -partial_chain -CApath /path/to/certs httpbin-org-leaf.pem
 ```
+It was written to:
 
 ### Output
 ```
@@ -67,6 +40,68 @@ openssl verify -partial_chain -CApath /path/to/certs httpbin-org-leaf.pem
 +----------------------------------------------------+------------+------------+------------------------------------------+
 
 ```
+
+``````
++-------------------------------------------------------------------+-------------------------------------------------------------------+----------------------+------------------------------------------+----------------------+
+|                           Subject Name                            |                              Issuer                               |         Type         |                 Filename                 |        Expiry        |
++===================================================================+===================================================================+======================+==========================================+======================+
+| Let's Encrypt Authority X3                                        | DST Root CA X3                                                    | Unknown              | so_int_ca.pem                            | 17-Mar-2021          |
++-------------------------------------------------------------------+-------------------------------------------------------------------+----------------------+------------------------------------------+----------------------+
+| Amazon                                                            | Amazon Root CA 1                                                  | Unknown              | httpbin-org-IntCA.pem                    | 21-Oct-2040          |
++-------------------------------------------------------------------+-------------------------------------------------------------------+----------------------+------------------------------------------+----------------------+
+| DigiCert SHA2 High Assurance Server CA                            | DigiCert High Assurance EV Root CA                                | Unknown              | github_int_ca.pem                        | 22-Oct-2028          |
++-------------------------------------------------------------------+-------------------------------------------------------------------+----------------------+------------------------------------------+----------------------+
+| GTS CA 1O1                                                        | GlobalSign                                                        | Unknown              | google_int_ca.pem                        | 15-Dec-2021          |
++-------------------------------------------------------------------+-------------------------------------------------------------------+----------------------+------------------------------------------+----------------------+
+
+{
+    "int_certs": 0,
+    "leaf_certs": 0,
+    "openssl_version": "OpenSSL 1.1.1h  22 Sep 2020",
+    "root_certs": 0,
+    "unknown_certs": 8
+}
+
++------------------------------------------------------------------------+----------------------+
+|                              Expired Cert                              |     Expiry Date      |
++========================================================================+======================+
+| Let's Encrypt Authority X3                                             | 17-Mar-2021          |
+| Let's Encrypt Authority X3                                             | 17-Mar-2021          |
++------------------------------------------------------------------------+----------------------+
+```
+The code throws away hostnames that don't respond to a `socket.getaddr()` or `socket.connect()`.
+
+For offline checks - when you have all the trusted and untrusted certificates locally - the `class LeafVerify` uses `OpenSSL.crypto` from `pyOpenSSL`. This is the equivalent of:
+
+### Usage
+```
+usage: main.py [-h] [--hostnames-file HOSTNAMES_FILE] -c CERTS_PATH [-r REHASH_PATH] [-p PRINT_TRUSTSTORE_INFO] [-s]
+               [-t] [-all]
+               
+python3 main.py -f hostnames.txt                                                # use default Certificate folder ( /support/ca_files )
+python3 main.py -f hostnames.txt -c /ca_certs/ -r ~/openssl/bin/c_rehash        # specify location of certificates and c_rehash
+python3 main.py -p hostnames.txt -c /ca_certs/ -p                               # prints Certification information inside CA folder location 
+
+
+PyOpenSSL
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --hostnames-file HOSTNAMES_FILE, -f HOSTNAMES_FILE
+                        Path to text file that includes hostnames to check
+  -c CERTS_PATH, --certs-path CERTS_PATH
+                        Path to directory of Root and Intermediate Cert Authority certificates
+  -r REHASH_PATH, --rehash-path REHASH_PATH
+                        Path to OpenSSL's c_rehash tool. This generates the symbolic required for OpenSSL's Verify()
+                        to workIf you don't include this value, it will default to ~/openssl/bin
+  -p PRINT_TRUSTSTORE_INFO, --print-truststore-info PRINT_TRUSTSTORE_INFO
+                        Prints out information about the directory of Root and Intermediate Cert Authority
+                        certificates. This is the Truststore.
+  -s, --socket-info     Prints the I.P. address returned from from getaddrinfo()
+  -t, --time            Prints the time for tls_client.do_handshake() to complete
+  -all, --all           Prints all information available
+```
+
 
 ### Design choices
 The `main.py` file relies on `OpenSSL.SSL` from `pyOpenSSL`.  `pyOpenSSL` is a thin wrapper on top of the `C` based `OpenSSL`.  `pyOpenSSL` is a good way to get familiar with the `C OpenSSL APIs`, `Structs` and `Flags`.  

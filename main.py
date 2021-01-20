@@ -38,14 +38,10 @@ if __name__ == "__main__":
                         cert_buf = f.read()
                         orig_cert = load_certificate(FILETYPE_PEM, cert_buf)
                         checker = YDCertFilesChecker(orig_cert, filename)
-                        checker.classify_cert()
                         checker.add_cert_to_summary_table()
-                        except OpenSSL.crypto.Error:
-                            print("[!]openssl error")
                 except OpenSSL.crypto.Error:
                     print("Error happened in Load Certificate call:", filename)
-        print("\n" + YDCertFilesChecker.table.draw() + "\n")
-        YDCertFilesChecker.print_expired_cert_summary()
+        YDCertFilesChecker.print_cert_files_summary()
 
 
 

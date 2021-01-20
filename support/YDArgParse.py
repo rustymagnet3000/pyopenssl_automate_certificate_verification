@@ -8,14 +8,14 @@ parser.add_argument(
     '-f',
     help='Path to text file that includes hostnames to check',
     type=argparse.FileType('r', encoding='UTF-8'),
-    required=True)
+    required=False)
 
 parser.add_argument(
     "-c",
     "--certs-path",
     help='Path to directory of Root and Intermediate Cert Authority certificates',
     default=getcwd() + '/support/ca_files',
-    required=True)
+    required=False)
 
 parser.add_argument(
     "-r",
@@ -30,8 +30,8 @@ parser.add_argument(
     "--print-truststore-info",
     help='Prints out information about the directory of Root and Intermediate Cert Authority certificates. '
          'This is the Truststore.',
-    default=getcwd() + '/support/ca_files',
-    required=False)
+    required=False,
+    action="store_true")
 
 parser.add_argument(
     "-s",
