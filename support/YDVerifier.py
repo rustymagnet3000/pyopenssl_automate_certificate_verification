@@ -10,7 +10,7 @@ from OpenSSL.SSL import (
     Context,
     VERIFY_PEER
 )
-from support.CertChainLList import CertNode
+from support.YDCertChainLList import CertNode
 from texttable import Texttable
 
 

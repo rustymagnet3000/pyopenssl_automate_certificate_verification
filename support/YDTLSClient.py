@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 from support.YDVerifier import Verifier
-from support.CertChainLList import SinglyLinkedList
+from support.YDCertChainLList import SinglyLinkedList
 from OpenSSL.SSL import Connection
 import time
 

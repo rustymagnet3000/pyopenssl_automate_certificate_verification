@@ -3,12 +3,12 @@ import re
 
 
 class HostNameCleaner:
-    def __init__(self, orig_file):
-        self.raw_file = orig_file
+    def __init__(self, hostnames_file, method):
+        self.raw_file = hostnames_file
         self.hostnames = []
-        self.clean_hostnames()
+        self.file = open(hostnames_file, method)
 
-    def clean_hostnames(self):
+    def __enter__(self):
         """
             Passed an Opened file
             Check if each line is a valid Hostname
@@ -22,6 +22,12 @@ class HostNameCleaner:
                 host_sanitize_l2 = HostNameCleaner.is_valid_hostname(host_sanitize_l1)
                 if host_sanitize_l2 is not None:
                     self.hostnames.append(host_sanitize_l2)
+        print("[*]Cleaned hostnames: {}".format(self.hostnames))
+        return self.hostnames
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.file.close()
+        print("[*]clean-up. Closing hostname file")
 
     @staticmethod
     def remove_wildcard(hostname):
@@ -34,10 +40,9 @@ class HostNameCleaner:
     def is_valid_hostname(hostname):
         hostname_regex = re.compile("(?!-)[A-Z\d-]{5,63}(?<!-)$", re.IGNORECASE)
         num_periods = re.findall(r'\.', hostname)
-        #num_non_alpha = re.findall(r'\W', hostname)
         if len(hostname) > 255:
             return None
-        if len(num_periods) == 0 or len(num_periods) > 7:   # remove hostnames with whitespace ( spaces / tabs )
+        if len(num_periods) == 0 or len(num_periods) > 7:   # remove hostnames with no periods or too many periods
             return None
         if len(re.findall(r'\s+', hostname)) > 0:           # remove hostnames with whitespace ( spaces / tabs )
             return None
