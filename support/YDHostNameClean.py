@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import re
 
 
@@ -9,10 +8,9 @@ class HostNameCleaner:
 
     def __enter__(self):
         """
-            Passed an Opened file
             Check if each line is a valid Hostname
             if line fails, return don't return that line
-            :return: [hostnames]
+            :return: [hostnames list]
         """
         for line in self.file:
             if len(line) > 0 and line[0] != '#':

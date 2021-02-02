@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 from OpenSSL.crypto import X509, X509Extension
 from datetime import datetime, timedelta
 from time import strptime, strftime, mktime

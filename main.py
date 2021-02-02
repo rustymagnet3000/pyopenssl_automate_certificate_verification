@@ -2,15 +2,14 @@
 
 import OpenSSL
 from OpenSSL.SSL import Error, WantReadError
-from OpenSSL.crypto import X509, load_certificate, FILETYPE_PEM
+from OpenSSL.crypto import load_certificate, FILETYPE_PEM
 from socket import gaierror, timeout
 from support.YDCertFilesChecker import YDCertFilesChecker
 from support.YDSocket import YDSocket
 from support.YDTLSClient import YDTLSClient
 from support.YDArgParse import parser
 from support.YDVerifier import Verifier
-from support.HostNameClean import HostNameCleaner
-from support.CertCheck import LeafVerify
+from support.YDHostNameClean import HostNameCleaner
 import os
 
 
@@ -37,7 +36,7 @@ if __name__ == "__main__":
                         with YDSocket(host) as s:
                             YDSocket.table.add_row([host, 'connected', s.sock.getpeername()])
                             YDSocket.open_sockets += 1
-                            client = YDTLSClient(host, s.sock, verifier)
+
                     except timeout:
                         YDSocket.table.add_row([host, 'fail', 'timeout'])
                         YDSocket.bad_sockets += 1

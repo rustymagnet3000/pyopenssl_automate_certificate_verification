@@ -1,8 +1,8 @@
-#!/usr/bin/python3
 from socket import (
     socket, getaddrinfo, AF_INET, SOCK_STREAM, IPPROTO_TCP
 )
 from texttable import Texttable
+from support.YDTLSClient import YDTLSClient
 
 
 class YDSocket:
@@ -21,6 +21,7 @@ class YDSocket:
         self.sock.setblocking(True)
         getaddrinfo(self.host, YDSocket.port, proto=IPPROTO_TCP)
         self.sock.connect((self.host, YDSocket.port))
+        self.tls_client = YDTLSClient(self.host, self.sock)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):

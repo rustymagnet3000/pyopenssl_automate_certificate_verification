@@ -1,15 +1,6 @@
-#!/usr/bin/python3
 import subprocess
 from os import listdir, remove
 from os.path import isdir, exists, join
-from OpenSSL.SSL import (
-    TLSv1_2_METHOD,
-    OP_NO_SSLv2,
-    OP_NO_SSLv3,
-    OP_NO_TLSv1,
-    Context,
-    VERIFY_PEER
-)
 from support.YDCertChainLList import CertNode
 from texttable import Texttable
 
@@ -21,8 +12,6 @@ class Verifier:
         self.cert_hash_count = 0
         self.path_to_ca_certs = ca_dir
         self.path_to_c_rehash = c_rehash_loc
-        self.verify_flags = 0x80000  # partial Chain allowed
-        self.context = self.set_context()
 
     def __enter__(self):
         self.verify_ca_dir_and_files()
@@ -92,18 +81,6 @@ class Verifier:
                     chain.at_end(cert)
                     break
         return ok
-
-    def set_context(self):
-        """
-            Set the OpenSSL.context. Notice it sets a flag ont the Cert Store associated to the Context
-        """
-        context = Context(TLSv1_2_METHOD)
-        context.set_timeout(3)
-        context.set_options(OP_NO_SSLv2 | OP_NO_SSLv3 | OP_NO_TLSv1)
-        context.get_cert_store().set_flags(self.verify_flags)
-        context.load_verify_locations(cafile=None, capath=bytes(self.path_to_ca_certs, 'utf-8'))
-        context.set_verify(VERIFY_PEER, Verifier.verify_cb)
-        return context
 
     @staticmethod
     def print_time_to_handshake():
