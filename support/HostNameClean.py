@@ -3,10 +3,9 @@ import re
 
 
 class HostNameCleaner:
-    def __init__(self, hostnames_file, method):
-        self.raw_file = hostnames_file
+    def __init__(self, hostnames_file):
         self.hostnames = []
-        self.file = open(hostnames_file, method)
+        self.file = hostnames_file.read().split("\n")
 
     def __enter__(self):
         """
@@ -15,18 +14,16 @@ class HostNameCleaner:
             if line fails, return don't return that line
             :return: [hostnames]
         """
-        file_by_lines = self.raw_file.read().split("\n")
-        for line in file_by_lines:
+        for line in self.file:
             if len(line) > 0 and line[0] != '#':
                 host_sanitize_l1 = HostNameCleaner.remove_wildcard(line)
                 host_sanitize_l2 = HostNameCleaner.is_valid_hostname(host_sanitize_l1)
                 if host_sanitize_l2 is not None:
                     self.hostnames.append(host_sanitize_l2)
-        print("[*]Cleaned hostnames: {}".format(self.hostnames))
+        print("[*]Cleaned hostnames\t{}".format(self.hostnames))
         return self.hostnames
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.file.close()
         print("[*]clean-up. Closing hostname file")
 
     @staticmethod

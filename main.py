@@ -31,8 +31,8 @@ if __name__ == "__main__":
             YDCertFilesChecker.print_cert_files_summary()
 
         if args.hostnames_file:
-            with HostNameCleaner(args.hostnames_file, 'r') as hosts:
-                for host in hosts.hostnames:
+            with HostNameCleaner(args.hostnames_file) as hosts:
+                for host in hosts:
                     try:
                         with YDSocket(host) as s:
                             YDSocket.table.add_row([host, 'connected', s.sock.getpeername()])
@@ -51,6 +51,7 @@ if __name__ == "__main__":
                     except:
                         YDSocket.table.add_row([host, 'fail', 'Socket error. unhandled'])
                         YDSocket.bad_sockets += 1
-                YDSocket.print_all_connections()
-                # for chain in Verifier.certificate_chains:
-                #     chain.print_chain_details()
+            YDSocket.print_all_connections()
+
+            for chain in Verifier.certificate_chains:
+                chain.print_chain_details()
