@@ -72,4 +72,4 @@ class LeafVerify:
     @staticmethod
     def pretty_date(date_from_cert: bytes):
         date = (datetime.datetime.strptime(date_from_cert.decode('ascii'), '%Y%m%d%H%M%SZ'))
-        return(f"{date:%d-%b-%Y}")
+        return f"{date:%d-%b-%Y}"
