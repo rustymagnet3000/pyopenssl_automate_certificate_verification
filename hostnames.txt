@@ -1,4 +1,4 @@
-blackhole.deadlink
+blackhole.dead
 stackoverflow.com
 httpbin.org
 github.com
