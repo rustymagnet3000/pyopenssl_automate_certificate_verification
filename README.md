@@ -1,5 +1,4 @@
-# PyOpenSSL playground
-
+# Automate Certificate verification with pyOpenSSL
 If you want to automate either of the following `OpenSSL commands`, this repo could help:
 ```
 openssl s_client -CApath /path/to/certs -connect google.com:443
@@ -34,8 +33,8 @@ optional arguments:
   -all, --all           Prints all information available
 ```
 
-### Output
-##### Print information about Trust Store OpenSSL will use
+### Print Trust Store
+This list of Certificates represents the `Trust Store` that OpenSSL will use to verify your certificate:
 ```
 python3 main.py -p
 
@@ -63,37 +62,41 @@ python3 main.py -p
 
 [*]clean-up.  Deleted all symbolic links.
 ```
-### Output
-##### Verify hostnames and certificate chains
+### Verify hostnames and certificate chains
 ```
 python3 main.py -f hostnames.txt            # used default Certificate folder ( /support/ca_files )
 
-[*]OpenSSL 1.1.1h  22 Sep 2020
-[*]Creating symbolic links for OpenSSL
-[*]Certificates in Trust Store :4
-
 +----------------------------------------------------+------------+--------------------------------+
-|                      Hostname                      |   result   |           server IP            |
+|                     Hostnames                      |   Socket   |         Good 5 / Bad 1         |
 +====================================================+============+================================+
+| blackhole.dead                                     | fail       | get_address_info() error       |
 | stackoverflow.com                                  | connected  | ('151.101.193.69', 443)        |
-| httpbin.org                                        | connected  | ('184.72.216.47', 443)         |
-| github.com                                         | connected  | ('140.82.121.4', 443)          |
-| google.com                                         | connected  | ('172.217.169.46', 443)        |
-| microsoft.com                                      | connected  | ('13.77.161.179', 443)         |
+| httpbin.org                                        | connected  | ('54.158.248.248', 443)        |
+| github.com                                         | connected  | ('140.82.121.3', 443)          |
+| google.com                                         | connected  | ('216.58.210.206', 443)        |
+| microsoft.com                                      | connected  | ('40.76.4.15', 443)            |
 +----------------------------------------------------+------------+--------------------------------+
 
 
-+----------------------------------------------------+------------+------------+------------------------------------------+
-|                      Hostname                      |    Time    |   Cipher   |               TLS Protocol               |
-+====================================================+============+============+==========================================+
-| stackoverflow.com                                  | 0.114      | TLSv1.2    | ECDHE-RSA-AES128-GCM-SHA256              |
-| httpbin.org                                        | 0.354      | TLSv1.2    | ECDHE-RSA-AES128-GCM-SHA256              |
-| github.com                                         | 0.156      | TLSv1.2    | ECDHE-RSA-AES128-GCM-SHA256              |
-| google.com                                         | 0.098      | TLSv1.2    | ECDHE-ECDSA-CHACHA20-POLY1305            |
-| microsoft.com                                      | failed     | None       | None                                     |
-|                                                    | verify     |            |                                          |
-+----------------------------------------------------+------------+------------+------------------------------------------+
++--------------------------------+-----------------+--------------------------------+--------------------------------+------------+
+|             Server             |  OpenSSL Error  |        Cert Common Name        |        Cert Issuer Name        |   Depth    |
++================================+=================+================================+================================+============+
+| stackoverflow.com              | 20              | R3                             | DST Root CA X3                 | 1          |
+| microsoft.com                  | 19              | Baltimore CyberTrust Root      | Baltimore CyberTrust Root      | 2          |
++--------------------------------+-----------------+--------------------------------+--------------------------------+------------+
 
+
++--------------------------------+-----------------+-------------------------------------+-----------------+
+|         Verified hosts         |   TLS Version   |          TLS Cipher family          | Handshake time  |
++================================+=================+=====================================+=================+
+| httpbin.org                    | TLSv1.2         | ECDHE-RSA-AES128-GCM-SHA256         | 0.286           |
+| github.com                     | TLSv1.2         | ECDHE-RSA-AES128-GCM-SHA256         | 0.087           |
+| google.com                     | TLSv1.2         | ECDHE-ECDSA-CHACHA20-POLY1305       | 0.116           |
++--------------------------------+-----------------+-------------------------------------+-----------------+
+
+[*]Verifier class clean-up. Deleted all symbolic links.
+
+Process finished with exit code 0
 ```
 
 

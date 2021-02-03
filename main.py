@@ -40,6 +40,5 @@ if __name__ == "__main__":
                     except:
                         e = sys.exc_info()[0]
                         YDSocket.handle_socket_errors(host, e)
-
             YDSocket.print_all_connections()
             Verifier.print_all()

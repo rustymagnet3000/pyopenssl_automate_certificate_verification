@@ -89,16 +89,16 @@ class Verifier:
         First, prints all the Certs that failed to verify.
         :return: None
         """
-        error_table = Texttable(max_width=120)
-        error_table.set_cols_width([30, 15, 30, 30, 10])
+        error_table = Texttable(max_width=135)
+        error_table.set_cols_width([40, 15, 40, 40, 10])
         error_table.header(['Server', 'OpenSSL Error', 'Cert Common Name', 'Cert Issuer Name', 'Depth'])
         error_table.set_deco(Texttable.BORDER | Texttable.HEADER | Texttable.VLINES)
         for i in Verifier.certificate_that_failed_verify:
             error_table.add_row(i)
         print("\n" + error_table.draw() + "\n")
 
-        verified_table = Texttable(max_width=120)
-        verified_table.set_cols_width([30, 15, 35, 15])
+        verified_table = Texttable(max_width=110)
+        verified_table.set_cols_width([40, 15, 40, 15])
         verified_table.header(['Verified hosts', 'TLS Version', 'TLS Cipher family', 'Handshake time'])
         verified_table.set_deco(Texttable.BORDER | Texttable.HEADER | Texttable.VLINES)
 
