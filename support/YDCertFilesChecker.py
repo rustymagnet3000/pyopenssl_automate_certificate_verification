@@ -4,7 +4,6 @@ from time import strptime, strftime, mktime
 from texttable import Texttable
 from operator import eq
 from enum import Enum
-import json
 
 
 class CertType(Enum):
@@ -99,7 +98,7 @@ class YDCertFilesChecker:
         """
         table = Texttable(max_width=200)
         table.set_cols_width([50, 50, 20, 40, 20])
-        table.header(['Subject Name', 'Issuer', 'Type', 'Filename', 'Expiry'])
+        table.header(['Trust Store certificate', 'Issuer', 'Type', 'Filename', 'Expiry'])
         table.set_deco(table.BORDER | Texttable.HEADER | Texttable.VLINES | Texttable.HLINES)
 
         for i in YDCertFilesChecker.each_cert_summary_info:
@@ -107,7 +106,6 @@ class YDCertFilesChecker:
 
         print("\n" + table.draw() + "\n")
 
-        print(json.dumps(YDCertFilesChecker.summary, indent=4, sort_keys=True))
         if len(YDCertFilesChecker.expired_certs) > 0 or len(YDCertFilesChecker.expiring_certs) > 0:
             table = Texttable(max_width=100)
             table.set_cols_width([70, 20])

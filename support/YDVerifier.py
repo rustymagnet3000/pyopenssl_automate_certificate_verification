@@ -1,12 +1,11 @@
 import subprocess
 from os import listdir, remove
 from os.path import isdir, exists, join
-from support.YDCertChainLList import CertNode
 from texttable import Texttable
 
 
 class Verifier:
-    certificate_chains = []
+    tls_clients = []
     certificate_that_failed_verify = []
 
     def __init__(self, ca_dir, c_rehash_loc):
@@ -70,34 +69,19 @@ class Verifier:
             If not, add it at the end of the Linked List
             Break to avoid going through all the other Linked Lists, if the Cert was added
         """
-        result = "pass" if ok else "fail"
         if not ok:
-            Verifier.certificate_that_failed_verify.append([result, err_num, conn.get_servername(),
-                                                           cert.get_subject().CN, cert.get_issuer().CN])
-
-        for chain in Verifier.certificate_chains:
-            if (bytes(chain.name, 'utf-8')) in conn.get_servername():
-                cert = CertNode(result, depth, cert.get_subject().CN)
-                if chain.head_val is None:
-                    chain.head_val = cert
-                    break
-                else:
-                    chain.at_end(cert)
-                    break
+            Verifier.certificate_that_failed_verify.append([
+                                                            conn.get_servername(),
+                                                            err_num,
+                                                            cert.get_subject().CN,
+                                                            cert.get_issuer().CN,
+                                                            depth
+                                                            ])
         return ok
 
     @staticmethod
-    def print_time_to_handshake():
-        """
-            Pretty print the hostname, time to tls-handshake
-        """
-        table = Texttable(max_width=130)
-        table.set_cols_width([50, 10, 10, 40])
-        table.set_deco(table.BORDER | Texttable.HEADER | Texttable.VLINES)
-        table.header(['Hostname', 'Time', 'Cipher', 'TLS Protocol'])
-        for chain in Verifier.certificate_chains:
-            table.add_row([chain.name, chain.pretty_time(), chain.cipher_version, chain.tls_version])
-        print("\n" + table.draw() + "\n")
+    def pretty_time(end_time, start_time):
+        return '{0:.3f}'.format(end_time - start_time)
 
     @staticmethod
     def print_all():
@@ -105,14 +89,24 @@ class Verifier:
         First, prints all the Certs that failed to verify.
         :return: None
         """
-        table = Texttable(max_width=120)
-        table.set_cols_width([15, 15, 30, 30, 30])
-        table.header(['Result', 'OpenSSL Error', 'Server', 'Cert Common Name', 'Cert Issuer Name'])
-        table.set_deco(table.BORDER | Texttable.HEADER | Texttable.VLINES | Texttable.HLINES)
+        error_table = Texttable(max_width=120)
+        error_table.set_cols_width([30, 15, 30, 30, 10])
+        error_table.header(['Server', 'OpenSSL Error', 'Cert Common Name', 'Cert Issuer Name', 'Depth'])
+        error_table.set_deco(Texttable.BORDER | Texttable.HEADER | Texttable.VLINES)
         for i in Verifier.certificate_that_failed_verify:
-            table.add_row(i)
-        print("\n" + table.draw() + "\n")
+            error_table.add_row(i)
+        print("\n" + error_table.draw() + "\n")
 
-        for chain in Verifier.certificate_chains:
-            chain.print_chain_details()
-        return None
+        verified_table = Texttable(max_width=120)
+        verified_table.set_cols_width([30, 15, 35, 15])
+        verified_table.header(['Verified hosts', 'TLS Version', 'TLS Cipher family', 'Handshake time'])
+        verified_table.set_deco(Texttable.BORDER | Texttable.HEADER | Texttable.VLINES)
+
+        for i in Verifier.tls_clients:
+            verified_table.add_row([
+                                    i.host,
+                                    i.tls_client.get_protocol_version_name(),
+                                    i.tls_client.get_cipher_name(),
+                                    Verifier.pretty_time(i.end_time, i.start_time)
+                                    ])
+        print("\n" + verified_table.draw() + "\n")

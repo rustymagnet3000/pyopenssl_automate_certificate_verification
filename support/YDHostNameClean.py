@@ -22,7 +22,7 @@ class HostNameCleaner:
         return self.hostnames
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        print("[*]clean-up. Closing hostname file")
+        print("[*]clean-up. Closing hostname file.")
 
     @staticmethod
     def remove_wildcard(hostname):

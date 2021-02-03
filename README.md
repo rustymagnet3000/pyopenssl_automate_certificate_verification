@@ -1,15 +1,39 @@
 # PyOpenSSL playground
 
-The repo solely relies on `OpenSSL.SSL` from `pyOpenSSL`.  `pyOpenSSL` is a thin wrapper on top of the `C OpenSSL library`.  
-
-If you want to automate the following `OpenSSL commands` for lots of `hostnames` or `certificates`, this repo could help:
+If you want to automate either of the following `OpenSSL commands`, this repo could help:
 ```
-openssl s_client -partial_chain -CApath /path/to/certs -connect httpbin.org:443
-
-openssl verify -partial_chain -CApath /path/to/certs httpbin-org-leaf.pem
+openssl s_client -CApath /path/to/certs -connect google.com:443
+openssl verify -partial_chain -CApath /path/to/certs google_intca.pem
 ```
 ### Setup
 `pip3 install -r requirements.txt`
+
+The repo solely relies on `pyOpenSSL` [ a thin wrapper around the `C OpenSSL` library ].
+
+### Usage
+```
+usage: main.py [-h] [--hostnames-file HOSTNAMES_FILE] -c CERTS_PATH [-r REHASH_PATH] [-p PRINT_TRUSTSTORE_INFO] [-s]
+               [-t] [-all]
+               
+PyOpenSSL
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --hostnames-file HOSTNAMES_FILE, -f HOSTNAMES_FILE
+                        Path to text file that includes hostnames to check
+  -c CERTS_PATH, --certs-path CERTS_PATH
+                        Path to directory of Root and Intermediate Cert Authority certificates
+  -r REHASH_PATH, --rehash-path REHASH_PATH
+                        Path to OpenSSL's c_rehash tool. This generates the symbolic required for OpenSSL's Verify()
+                        to workIf you don't include this value, it will default to ~/openssl/bin
+  -p PRINT_TRUSTSTORE_INFO, --print-truststore-info PRINT_TRUSTSTORE_INFO
+                        Prints out information about the directory of Root and Intermediate Cert Authority
+                        certificates. This is the Truststore.
+  -s, --socket-info     Prints the I.P. address returned from from getaddrinfo()
+  -t, --time            Prints the time for tls_client.do_handshake() to complete
+  -all, --all           Prints all information available
+```
+
 ### Output
 ##### Print information about Trust Store OpenSSL will use
 ```
@@ -42,7 +66,7 @@ python3 main.py -p
 ### Output
 ##### Verify hostnames and certificate chains
 ```
-python3 main.py -f hostnames.txt            # use default Certificate folder ( /support/ca_files )
+python3 main.py -f hostnames.txt            # used default Certificate folder ( /support/ca_files )
 
 [*]OpenSSL 1.1.1h  22 Sep 2020
 [*]Creating symbolic links for OpenSSL
@@ -72,29 +96,6 @@ python3 main.py -f hostnames.txt            # use default Certificate folder ( /
 
 ```
 
-### Usage
-```
-usage: main.py [-h] [--hostnames-file HOSTNAMES_FILE] -c CERTS_PATH [-r REHASH_PATH] [-p PRINT_TRUSTSTORE_INFO] [-s]
-               [-t] [-all]
-               
-PyOpenSSL
-
-optional arguments:
-  -h, --help            show this help message and exit
-  --hostnames-file HOSTNAMES_FILE, -f HOSTNAMES_FILE
-                        Path to text file that includes hostnames to check
-  -c CERTS_PATH, --certs-path CERTS_PATH
-                        Path to directory of Root and Intermediate Cert Authority certificates
-  -r REHASH_PATH, --rehash-path REHASH_PATH
-                        Path to OpenSSL's c_rehash tool. This generates the symbolic required for OpenSSL's Verify()
-                        to workIf you don't include this value, it will default to ~/openssl/bin
-  -p PRINT_TRUSTSTORE_INFO, --print-truststore-info PRINT_TRUSTSTORE_INFO
-                        Prints out information about the directory of Root and Intermediate Cert Authority
-                        certificates. This is the Truststore.
-  -s, --socket-info     Prints the I.P. address returned from from getaddrinfo()
-  -t, --time            Prints the time for tls_client.do_handshake() to complete
-  -all, --all           Prints all information available
-```
 
 
 ### Design choices
