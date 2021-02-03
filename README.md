@@ -2,7 +2,7 @@
 
 The repo solely relies on `OpenSSL.SSL` from `pyOpenSSL`.  `pyOpenSSL` is a thin wrapper on top of the `C OpenSSL library`.  
 
-If you used the following `OpenSSL` commands, this repo might be useful:
+If you want to automate the following `OpenSSL commands` for lots of `hostnames` or `certificates`, this repo could help:
 ```
 openssl s_client -partial_chain -CApath /path/to/certs -connect httpbin.org:443
 

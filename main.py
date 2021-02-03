@@ -35,8 +35,8 @@ if __name__ == "__main__":
                         with YDSocket(host) as s:
                             YDSocket.table.add_row([host, 'connected', s.sock.getpeername()])
                             YDSocket.open_sockets += 1
-                            with YDTLSClient(host, s.sock, verifier.path_to_ca_certs) as client:
-                                cert_chain = client.tls_client.get_peer_cert_chain()
+                            with YDTLSClient(host, s.sock, verifier.path_to_ca_certs) as cert_chain:
+                                Verifier.certificate_chains.append(cert_chain)
                     except:
                         e = sys.exc_info()[0]
                         YDSocket.handle_socket_errors(host, e)

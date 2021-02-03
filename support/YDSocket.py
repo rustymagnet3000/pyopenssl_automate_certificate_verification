@@ -48,6 +48,6 @@ class YDSocket:
 
     @staticmethod
     def print_all_connections():
-        YDSocket.table.header(['Hostnames', 'result', 'Good {0} / Bad {1} '.format(YDSocket.open_sockets,
+        YDSocket.table.header(['Hostnames', 'Socket', 'Good {0} / Bad {1} '.format(YDSocket.open_sockets,
                                                                                    YDSocket.bad_sockets)])
         print("\n" + YDSocket.table.draw() + "\n")

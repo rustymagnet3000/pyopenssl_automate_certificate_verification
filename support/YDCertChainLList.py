@@ -15,7 +15,7 @@ class SinglyLinkedList:
         self.head_val = None
         self.name = name
         self.tls_version = None
-        self.cipher_version = None
+        self.cipher_name = None
         self.start_time = time.time()
         self.end_time = None
 
