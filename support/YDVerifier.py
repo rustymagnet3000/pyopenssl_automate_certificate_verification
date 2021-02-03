@@ -7,6 +7,7 @@ from texttable import Texttable
 
 class Verifier:
     certificate_chains = []
+    certificate_that_failed_verify = []
 
     def __init__(self, ca_dir, c_rehash_loc):
         self.cert_hash_count = 0
@@ -69,7 +70,10 @@ class Verifier:
             If not, add it at the end of the Linked List
             Break to avoid going through all the other Linked Lists, if the Cert was added
         """
-        result = "pass" if ok else "fail:{}".format(err_num)
+        result = "pass" if ok else "fail"
+        if not ok:
+            Verifier.certificate_that_failed_verify.append([result, err_num, conn.get_servername(),
+                                                           cert.get_subject().CN, cert.get_issuer().CN])
 
         for chain in Verifier.certificate_chains:
             if (bytes(chain.name, 'utf-8')) in conn.get_servername():
@@ -94,3 +98,18 @@ class Verifier:
         for chain in Verifier.certificate_chains:
             table.add_row([chain.name, chain.pretty_time(), chain.cipher_version, chain.tls_version])
         print("\n" + table.draw() + "\n")
+
+    @staticmethod
+    def print_all():
+        """
+        First, prints all the Certs that failed to verify.
+        :return: None
+        """
+        table = Texttable(max_width=120)
+        table.set_cols_width([15, 15, 30, 30, 30])
+        table.header(['Result', 'OpenSSL Error', 'Server', 'Cert Common Name', 'Cert Issuer Name'])
+        table.set_deco(table.BORDER | Texttable.HEADER | Texttable.VLINES | Texttable.HLINES)
+        for i in Verifier.certificate_that_failed_verify:
+            table.add_row(i)
+        print("\n" + table.draw() + "\n")
+        return None

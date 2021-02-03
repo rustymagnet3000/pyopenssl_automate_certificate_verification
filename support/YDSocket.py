@@ -30,6 +30,7 @@ class YDSocket:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.sock.close()
+        return True
 
     @staticmethod
     def handle_socket_errors(host, error):

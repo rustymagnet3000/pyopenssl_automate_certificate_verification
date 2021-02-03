@@ -21,7 +21,7 @@ if __name__ == "__main__":
                     try:
                         with open(os.path.join(verifier.path_to_ca_certs, filename), "r") as f:
                             cert_buffer = f.read()
-                            orig_cert = load_certificate(FILETYPE_PEM, cert_buffer)
+                            orig_cert = load_certificate(FILETYPE_PEM, bytes(cert_buffer, 'utf-8'))
                             checker = YDCertFilesChecker(orig_cert, filename)
                             checker.add_cert_to_summary_table()
                     except OpenSSL.crypto.Error:
@@ -42,8 +42,4 @@ if __name__ == "__main__":
                         YDSocket.handle_socket_errors(host, e)
 
             YDSocket.print_all_connections()
-
-            for chain in Verifier.certificate_chains:
-                chain.print_chain_details()
-            for bad_tls_host in YDTLSClient.tls_handshake_failed:
-                print(bad_tls_host)
+            Verifier.print_all()
