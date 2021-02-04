@@ -19,7 +19,7 @@ class YDSocket:
 
     def __enter__(self):
         """
-            The getaddrinfo() call throw a GAI Error, if bad hostname
+            The getaddrinfo() call can throw a GAI Error, if hostname cannot resolve to an IP address
             The connect() can throw
         :return: self
         """
