@@ -1,4 +1,4 @@
-from support.YDOpenSSLContextHelper import OpenSSLContextHelper
+from support.YDPyOpenSSLContextHelper import OpenSSLContextHelper
 from OpenSSL.SSL import Connection
 import time
 
