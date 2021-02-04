@@ -11,9 +11,8 @@ The repo solely relies on `pyOpenSSL` [ a thin wrapper around the `C OpenSSL` li
 
 ### Usage
 ```
-usage: main.py [-h] [--hostnames-file HOSTNAMES_FILE] -c CERTS_PATH [-r REHASH_PATH] [-p PRINT_TRUSTSTORE_INFO] [-s]
-               [-t] [-all]
-               
+usage: main.py [-h] [--hostnames-file HOSTNAMES_FILE] [-c CERTS_PATH] [-r REHASH_PATH] [-p]
+
 PyOpenSSL
 
 optional arguments:
@@ -24,13 +23,10 @@ optional arguments:
                         Path to directory of Root and Intermediate Cert Authority certificates
   -r REHASH_PATH, --rehash-path REHASH_PATH
                         Path to OpenSSL's c_rehash tool. This generates the symbolic required for OpenSSL's Verify()
-                        to workIf you don't include this value, it will default to ~/openssl/bin
-  -p PRINT_TRUSTSTORE_INFO, --print-truststore-info PRINT_TRUSTSTORE_INFO
+                        to work if you don't include this value, it will default to ~/openssl/bin
+  -p, --print-truststore-info
                         Prints out information about the directory of Root and Intermediate Cert Authority
                         certificates. This is the Truststore.
-  -s, --socket-info     Prints the I.P. address returned from from getaddrinfo()
-  -t, --time            Prints the time for tls_client.do_handshake() to complete
-  -all, --all           Prints all information available
 ```
 
 ### Print Trust Store

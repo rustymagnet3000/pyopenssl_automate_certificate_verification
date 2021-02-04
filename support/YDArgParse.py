@@ -21,7 +21,7 @@ parser.add_argument(
     "-r",
     "--rehash-path",
     help='Path to OpenSSL\'s c_rehash tool. This generates the symbolic required for OpenSSL\'s Verify() to work'
-         'If you don\'t include this value, it will default to ~/openssl/bin',
+         ' if you don\'t include this value, it will default to ~/openssl/bin',
     default=environ['HOME'] + '/openssl/bin/c_rehash',
     required=False)
 
@@ -30,25 +30,5 @@ parser.add_argument(
     "--print-truststore-info",
     help='Prints out information about the directory of Root and Intermediate Cert Authority certificates. '
          'This is the Truststore.',
-    required=False,
-    action="store_true")
-
-parser.add_argument(
-    "-s",
-    "--socket-info",
-    help='Prints the I.P. address returned from from getaddrinfo()',
-    action="store_true")
-
-parser.add_argument(
-    "-t",
-    "--time",
-    help='Prints the time for tls_client.do_handshake() to complete',
-    required=False,
-    action="store_true")
-
-parser.add_argument(
-    "-all",
-    "--all",
-    help='Prints all information available',
     required=False,
     action="store_true")

@@ -63,11 +63,7 @@ class Verifier:
     def verify_cb(conn, cert, err_num, depth, ok):
         """
             Callback from OpenSSL. Invoked on each Certificate in Chain being checked.
-            The code loops through a List of Linked Lists. These Linked Lists represent each Certificate Chain.
-            if it finds the Linked List a matching servername it wants to adds Certs to that chain
-            If there is no Head, set it with Cert being verified ( as OpenSSL starts at the top of hierarchy )
-            If not, add it at the end of the Linked List
-            Break to avoid going through all the other Linked Lists, if the Cert was added
+            Only used to add Certificates that do NOT verify to a List.
         """
         if not ok:
             Verifier.certificate_that_failed_verify.append([

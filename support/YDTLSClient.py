@@ -7,7 +7,7 @@ class YDTLSClient:
 
     def __init__(self, host, sock, path_to_ca_certs):
         """
-        Creates a Node to add to the Cert Chain Linked List
+        Creates a OpenSSL.SSL.Connection.
         :param host: str of hostname
         :param sock: the live socket
         :param path_to_ca_certs: string path to cert fplder
