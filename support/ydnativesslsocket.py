@@ -1,3 +1,0 @@
-#tba
-class YDNativeSSLSocket:
-
