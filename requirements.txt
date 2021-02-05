@@ -1,3 +1,4 @@
 pyOpenSSL
+pytest
 texttable~=1.6.3
 six~=1.11.0
