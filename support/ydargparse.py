@@ -32,3 +32,11 @@ parser.add_argument(
          'This is the Truststore.',
     required=False,
     action="store_true")
+
+parser.add_argument(
+    "-n",
+    "--native-ssl",
+    help='Instead of pyOpenSSL this uses the native \'ssl\' module.  '
+         'Useful when the endpoint might timeout during do_handshake()',
+    required=False,
+    action="store_true")

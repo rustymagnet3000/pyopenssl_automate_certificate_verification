@@ -6,10 +6,10 @@ from OpenSSL.SSL import (
     Context,
     VERIFY_PEER
 )
-from support.YDVerifier import Verifier
+from support.ydverifier import Verifier
 
 
-class OpenSSLContextHelper:
+class YDOpenSSLContext:
     @staticmethod
     def get_context(path_to_ca_certs):
         """

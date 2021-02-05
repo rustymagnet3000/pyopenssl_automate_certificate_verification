@@ -1,11 +1,8 @@
 #!/usr/bin/python3
 import unittest
-from socket import socket
-import time
-from OpenSSL.SSL import Connection
-from support.YDVerifier import Verifier
-from support.CertCheck import LeafVerify
-from support.test_certs import (
+
+from support.ydleafverify import YDLeafVerify
+from support.testcerts import (
     int_ca_cert_pem,
     root_ca_cert_pem,
     good_leaf_cert_pem,
@@ -16,36 +13,6 @@ from OpenSSL.crypto import (
     load_certificate,
     FILETYPE_PEM
 )
-
-
-class TestOpenSSLVerifySpeed(unittest.TestCase):
-
-    def tearDown(self):
-        t = time.time() - self.startTime
-        print('[*]%s: %.3f' % (self.id(), t))
-
-    def testDoHandshakeSingleServer(self, host='stackoverflow.com'):
-        verifier = Verifier()
-        Verifier.certificate_chains = []
-        assert verifier.cert_hash_count > 0
-        self.startTime = time.time()
-        port = 443
-        des = (host, port)
-        sock = socket()
-        sock.setblocking(True)
-        sock.connect_ex(sock.getsockname())
-        tls_client = Connection(verifier.context, sock)
-        tls_client.set_tlsext_host_name(bytes(host, 'utf-8'))  # Ensures ServerName when Verify callback invokes
-        tls_client.set_connect_state()  # set to work in client mode
-        try:
-            sock.connect(des)  # Try block to capture dead endpoints
-            tls_client.do_handshake()
-        except:
-            print("[!]catch all exception")
-        finally:
-            for chain in Verifier.certificate_chains:
-                chain.print_entire_chain()
-            sock.close()
 
 
 class TestLeafVerify(unittest.TestCase):
