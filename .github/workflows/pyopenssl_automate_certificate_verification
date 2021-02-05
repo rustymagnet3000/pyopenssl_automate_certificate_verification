@@ -21,4 +21,4 @@ jobs:
           pip install -r requirements.txt
           echo "[*]Unit tests started"
       - name: Run tests with pytest
-        run: pytest 
+        run: python3 -m pytest

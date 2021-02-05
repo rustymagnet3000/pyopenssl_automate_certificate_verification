@@ -50,4 +50,3 @@ if __name__ == "__main__":
             check_local_truststore()
         if args.hostnames_file:
             crete_sockets_and_handshake()
-

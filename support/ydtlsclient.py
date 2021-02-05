@@ -1,4 +1,4 @@
-from support.ydpyopensslcontext import OpenSSLContextHelper
+from support.ydpyopensslcontext import YDOpenSSLContext
 from OpenSSL.SSL import Connection
 import time
 
@@ -26,7 +26,7 @@ class YDTLSClient:
         :return: self
         """
         self.start_time = time.time()
-        self.tls_client = Connection(OpenSSLContextHelper.get_context(self.truststore_path), self.sock)
+        self.tls_client = Connection(YDOpenSSLContext.get_context(self.truststore_path), self.sock)
         self.tls_client.set_tlsext_host_name(self.host)             # Ensures ServerName for Verify() callbacks
         self.tls_client.set_connect_state()                         # set to work in client mode
         self.tls_client.do_handshake()
