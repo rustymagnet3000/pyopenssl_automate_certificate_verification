@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-from support.test_certs import (
+from support.testcerts import (
     int_ca_cert_pem,
     root_ca_cert_pem
 )
@@ -19,7 +19,7 @@ from OpenSSL.SSL import (
 import datetime
 
 
-class LeafVerify:
+class YDLeafVerify:
     def __init__(self, leaf_to_verify):
         self.trusted_certs = X509Store()
         self.load_trust_store()

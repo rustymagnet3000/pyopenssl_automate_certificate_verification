@@ -1,7 +1,7 @@
 import re
 
 
-class HostNameCleaner:
+class YDHostNameCleaner:
     def __init__(self, hostnames_file):
         self.hostnames = []
         self.file = hostnames_file.read().split("\n")
@@ -14,8 +14,8 @@ class HostNameCleaner:
         """
         for line in self.file:
             if len(line) > 0 and line[0] != '#':
-                host_sanitize_l1 = HostNameCleaner.remove_wildcard(line)
-                host_sanitize_l2 = HostNameCleaner.is_valid_hostname(host_sanitize_l1)
+                host_sanitize_l1 = YDHostNameCleaner.remove_wildcard(line)
+                host_sanitize_l2 = YDHostNameCleaner.is_valid_hostname(host_sanitize_l1)
                 if host_sanitize_l2 is not None:
                     self.hostnames.append(host_sanitize_l2)
         print("[*]Cleaned hostnames\t{}".format(self.hostnames))
@@ -28,7 +28,7 @@ class HostNameCleaner:
     def remove_wildcard(hostname):
         if hostname[0:2] == "*.":
             hostname = hostname[2:]
-            hostname = HostNameCleaner.remove_wildcard(hostname)
+            hostname = YDHostNameCleaner.remove_wildcard(hostname)
         return hostname
 
     @staticmethod
