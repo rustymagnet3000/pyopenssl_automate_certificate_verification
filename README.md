@@ -1,4 +1,7 @@
 ## Truststore Inspector
+
+![Truststore Inspector Tests](https://github.com/rustymagnet3000/truststore_inspector/workflows/Truststore%20Inspector%20Tests/badge.svg?branch=main)
+
 ## Check Certificates, verify hosts
 If you want to automate either of the following `OpenSSL commands`, this repo could help:
 ```
