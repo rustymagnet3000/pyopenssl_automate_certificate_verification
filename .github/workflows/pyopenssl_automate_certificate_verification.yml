@@ -4,7 +4,8 @@ name: Truststore Inspector Tests
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, fix_unit_tests ]
+
 
 jobs:
   build:
