@@ -26,7 +26,7 @@ def check_local_truststore():
     YDCertFilesChecker.print_cert_files_summary()
 
 
-def crete_sockets_and_handshake():
+def create_sockets_and_handshake():
     with YDHostNameCleaner(args.hostnames_file) as hosts:
         for host in hosts:
             try:
@@ -49,4 +49,4 @@ if __name__ == "__main__":
         if args.print_truststore_info:
             check_local_truststore()
         if args.hostnames_file:
-            crete_sockets_and_handshake()
+            create_sockets_and_handshake()

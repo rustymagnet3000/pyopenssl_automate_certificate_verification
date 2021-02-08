@@ -19,7 +19,17 @@ class Verifier:
         self.run_c_rehash()
         return self
 
+    def __repr__(self):
+        return f'Class:             {self.__class__.__name__},\
+                \nPath to certs:    {self.path_to_ca_certs!r}, \
+                \nPath to c_rehash: {self.path_to_c_rehash!r}, \
+                \nCertificates :    {self.cert_hash_count!r}'
+
     def __exit__(self, exc_type, exc_val, exc_tb):
+        """
+        Delete all created symbolic links
+
+        """
         for file in listdir(self.path_to_ca_certs):
             if file.endswith('.0') or file.endswith('.1'):
                 remove(join(self.path_to_ca_certs, file))
@@ -30,8 +40,7 @@ class Verifier:
             OpenSSL ships /bin/c_rehash.  Function to check it exists locally
         """
         if not exists(self.path_to_c_rehash):
-            print('[!]Cannot find c_rehash at:\t{0}'.format(self.path_to_c_rehash))
-            self.path_to_c_rehash = ''
+            raise Exception('[!]Cannot find c_rehash at:\t{0}'.format(self.path_to_c_rehash)).with_traceback(None)
 
     def verify_ca_dir_and_files(self):
         """

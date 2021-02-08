@@ -1,4 +1,5 @@
-# Automate Certificate verification with pyOpenSSL
+## Truststore Inspector
+## Check Certificates, verify hosts
 If you want to automate either of the following `OpenSSL commands`, this repo could help:
 ```
 openssl s_client -CApath /path/to/certs -connect google.com:443

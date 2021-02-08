@@ -1,12 +1,19 @@
+from OpenSSL.crypto import (
+    X509Store,
+    X509
+)
+from support.ydverifier import Verifier
 from ydleafverify import YDLeafVerify
 from testcerts import (
     good_leaf_cert_pem,
     bad_leaf_cert_pem
 )
-from OpenSSL.crypto import (
-    X509Store,
-    X509
-)
+
+
+def test_verifier_init_passes():
+    with Verifier(ca_dir='/support/ca_files', c_rehash_loc='/usr/bin/c_rehash') as verifier:
+        print(verifier)
+        assert True
 
 
 def test_good_leaf_cert():
