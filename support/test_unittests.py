@@ -2,6 +2,7 @@ from OpenSSL.crypto import (
     X509Store,
     X509
 )
+from os import getcwd
 from support.ydverifier import Verifier
 from ydleafverify import YDLeafVerify
 from testcerts import (
@@ -11,7 +12,7 @@ from testcerts import (
 
 
 def test_verifier_init_passes():
-    with Verifier(ca_dir='/support/ca_files', c_rehash_loc='/usr/bin/c_rehash') as verifier:
+    with Verifier(ca_dir=getcwd() + '/support/ca_files', c_rehash_loc='/usr/bin/c_rehash') as verifier:
         print(verifier)
         assert True
 

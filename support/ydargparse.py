@@ -1,5 +1,5 @@
 import argparse
-from os import getcwd, environ
+from os import getcwd
 
 parser = argparse.ArgumentParser(description="PyOpenSSL")
 
@@ -22,7 +22,7 @@ parser.add_argument(
     "--rehash-path",
     help='Path to OpenSSL\'s c_rehash tool. This generates the symbolic required for OpenSSL\'s Verify() to work'
          ' if you don\'t include this value, it will default to ~/openssl/bin',
-    default=environ['HOME'] + '/usr/bin/c_rehash',
+    default='/usr/bin/c_rehash',
     required=False)
 
 parser.add_argument(
